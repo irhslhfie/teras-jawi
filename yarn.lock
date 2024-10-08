@@ -2585,6 +2585,7 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@mui/icons-material": "npm:^6.1.2"
     "@mui/material": "npm:^6.1.2"
+    "@mui/utils": "npm:^6.1.2"
     "@mui/x-charts": "npm:^7.19.0"
     "@toolpad/core": "npm:^0.7.0"
     eslint: "npm:^8"
