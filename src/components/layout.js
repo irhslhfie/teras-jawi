@@ -1,9 +1,7 @@
 "use client";
 import SidebarMobile from '@/components/SidebarMobile';
-import AdbIcon from '@mui/icons-material/Adb';
-import MailIcon from '@mui/icons-material/Mail';
+import { menuItems } from '@/utils/constant';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MuiAppBar from '@mui/material/AppBar';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -19,10 +17,9 @@ import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import CompBreadcrumbs from './Breadcumbs';
-import { menuItems } from '@/utils/constant';
 
 const drawerWidth = 240;
 
@@ -38,6 +35,7 @@ const AppBar = styled(MuiAppBar, {
 }));
 
 export default function Layout({ children }) {
+    const router = useRouter();
     const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();
 
@@ -113,26 +111,27 @@ export default function Layout({ children }) {
                 anchor="left"
             >
                 <List>
-                    {menuItems.map((item, index) => (
+                    {menuItems?.map((item, index) => (
                         <ListItem
                             key={index}
-                            disablePadding  // Menghilangkan padding default ListItem
+                            disablePadding
                             sx={{
-                                marginBottom: 1,  // Memastikan tidak ada margin bawah
+                                marginBottom: 1,
                                 '&:last-child': {
-                                    marginBottom: 1, // Pastikan item terakhir juga tidak memiliki margin bawah
+                                    marginBottom: 1,
                                 },
                                 px: 1
                             }}
                         >
                             <ListItemButton
                                 sx={{
-                                    backgroundColor: isActive(item.path) ? '#edf4fb' : 'inherit',  // Warna latar belakang untuk item aktif
+                                    backgroundColor: isActive(item.path) ? '#edf4fb' : 'inherit',
                                     '&:hover': {
-                                        backgroundColor: isActive(item.path) ? '#e3eefa' : '#f5f5f5',  // Hover effect tetap
+                                        backgroundColor: isActive(item.path) ? '#e3eefa' : '#f5f5f5',
                                     },
                                     borderRadius: '8px',
                                 }}
+                                onClick={() => router.push(item.path)}
                             >
                                 <ListItemIcon
                                     sx={{
@@ -173,7 +172,7 @@ export default function Layout({ children }) {
                 }}
             >
                 <Toolbar />
-                <CompBreadcrumbs />
+                {/* <CompBreadcrumbs /> */}
                 {children}
             </Box>
         </Box>

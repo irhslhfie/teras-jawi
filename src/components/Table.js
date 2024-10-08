@@ -13,40 +13,15 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Checkbox from '@mui/material/Checkbox';
+import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
+import { visuallyHidden } from '@mui/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import { visuallyHidden } from '@mui/utils';
-
-function createData(id, name, calories, fat, carbs, protein) {
-    return {
-        id,
-        name,
-        calories,
-        fat,
-        carbs,
-        protein,
-    };
-}
-
-const rows = [
-    createData(1, 'Cupcake', 305, 3.7, 67, 4.3),
-    createData(2, 'Donut', 452, 25.0, 51, 4.9),
-    createData(3, 'Eclair', 262, 16.0, 24, 6.0),
-    createData(4, 'Frozen yoghurt', 159, 6.0, 24, 4.0),
-    createData(5, 'Gingerbread', 356, 16.0, 49, 3.9),
-    createData(6, 'Honeycomb', 408, 3.2, 87, 6.5),
-    createData(7, 'Ice cream sandwich', 237, 9.0, 37, 4.3),
-    createData(8, 'Jelly Bean', 375, 0.0, 94, 0.0),
-    createData(9, 'KitKat', 518, 26.0, 65, 7.0),
-    createData(10, 'Lollipop', 392, 0.2, 98, 0.0),
-    createData(11, 'Marshmallow', 318, 0, 81, 2.0),
-    createData(12, 'Nougat', 360, 19.0, 9, 37.0),
-    createData(13, 'Oreo', 437, 18.0, 63, 4.0),
-];
+import { useDeleteUser } from '@/hooks/admin/useAdmin';
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -66,34 +41,34 @@ function getComparator(order, orderBy) {
 
 const headCells = [
     {
-        id: 'name',
+        id: 'username',
         numeric: false,
         disablePadding: true,
-        label: 'Dessert (100g serving)',
+        label: 'Username',
     },
     {
-        id: 'calories',
-        numeric: true,
+        id: 'email',
+        numeric: false,
         disablePadding: false,
-        label: 'Calories',
+        label: 'E-Mail',
     },
     {
-        id: 'fat',
-        numeric: true,
+        id: 'phone_number',
+        numeric: false,
         disablePadding: false,
-        label: 'Fat (g)',
+        label: 'No HP',
     },
     {
-        id: 'carbs',
-        numeric: true,
+        id: 'role',
+        numeric: false,
         disablePadding: false,
-        label: 'Carbs (g)',
+        label: 'Role',
     },
     {
-        id: 'protein',
-        numeric: true,
+        id: 'action',
+        numeric: false,
         disablePadding: false,
-        label: 'Protein (g)',
+        label: 'Action',
     },
 ];
 
@@ -145,7 +120,21 @@ function EnhancedTableHead(props) {
 }
 
 function EnhancedTableToolbar(props) {
-    const { numSelected } = props;
+    const { numSelected, title, itemSelected } = props;
+
+    const deleteUser = useDeleteUser();
+    const handleDelete = () => {
+        const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus admin ini?');
+        if (confirmDelete) {
+            console.log('Data yg dihapus ==> ', itemSelected)
+            itemSelected.forEach(user_id => {
+                deleteUser.mutate(user_id);
+            });
+        } else {
+            toast.info('Penghapusan dibatalkan');
+        }
+    };
+
     return (
         <Toolbar
             sx={[
@@ -175,12 +164,19 @@ function EnhancedTableToolbar(props) {
                     id="tableTitle"
                     component="div"
                 >
-                    Nutrition
+                    {title}
                 </Typography>
             )}
-            {numSelected > 0 ? (
+            {numSelected > 0 && (
                 <Tooltip title="Delete">
-                    <IconButton>
+                    <IconButton onClick={handleDelete}>
+                        <DeleteIcon />
+                    </IconButton>
+                </Tooltip>
+            )}
+            {/* {numSelected > 0 ? (
+                <Tooltip title="Delete">
+                    <IconButton onClick={handleDelete}>
                         <DeleteIcon />
                     </IconButton>
                 </Tooltip>
@@ -190,12 +186,13 @@ function EnhancedTableToolbar(props) {
                         <FilterListIcon />
                     </IconButton>
                 </Tooltip>
-            )}
+            )} */}
         </Toolbar>
     );
 }
 
-export default function CompTable() {
+export default function CompTable({ data, tableTitle }) {
+    const router = useRouter();
     const [order, setOrder] = React.useState('asc');
     const [orderBy, setOrderBy] = React.useState('calories');
     const [selected, setSelected] = React.useState([]);
@@ -211,7 +208,7 @@ export default function CompTable() {
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelected = rows.map((n) => n.id);
+            const newSelected = data.map((n) => n.user_id);
             setSelected(newSelected);
             return;
         }
@@ -246,26 +243,21 @@ export default function CompTable() {
         setPage(0);
     };
 
-    const handleChangeDense = (event) => {
-        setDense(event.target.checked);
-    };
-
-    // Avoid a layout jump when reaching the last page with empty rows.
     const emptyRows =
-        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
 
     const visibleRows = React.useMemo(
         () =>
-            [...rows]
+            [...data]
                 .sort(getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-        [order, orderBy, page, rowsPerPage],
+        [order, orderBy, page, rowsPerPage, data],
     );
 
     return (
         <Box sx={{ width: '100%' }}>
             <Paper sx={{ width: '100%', mb: 2 }}>
-                <EnhancedTableToolbar numSelected={selected.length} />
+                <EnhancedTableToolbar numSelected={selected.length} title={tableTitle} itemSelected={selected} />
                 <TableContainer>
                     <Table
                         sx={{ minWidth: 750 }}
@@ -278,26 +270,27 @@ export default function CompTable() {
                             orderBy={orderBy}
                             onSelectAllClick={handleSelectAllClick}
                             onRequestSort={handleRequestSort}
-                            rowCount={rows.length}
+                            rowCount={data.length}
                         />
                         <TableBody>
                             {visibleRows.map((row, index) => {
-                                const isItemSelected = selected.includes(row.id);
+                                const isItemSelected = selected.includes(row.user_id);
                                 const labelId = `enhanced-table-checkbox-${index}`;
 
                                 return (
                                     <TableRow
                                         hover
-                                        onClick={(event) => handleClick(event, row.id)}
+                                        // onClick={(event) => handleClick(event, row.user_id)}
                                         role="checkbox"
-                                        aria-checked={isItemSelected}
+                                        // aria-checked={isItemSelected}
                                         tabIndex={-1}
-                                        key={row.id}
-                                        selected={isItemSelected}
+                                        key={row.user_id}
+                                        // selected={isItemSelected}
                                         sx={{ cursor: 'pointer' }}
                                     >
                                         <TableCell padding="checkbox">
                                             <Checkbox
+                                                onClick={(event) => handleClick(event, row.user_id)}
                                                 color="primary"
                                                 checked={isItemSelected}
                                                 inputProps={{
@@ -311,12 +304,14 @@ export default function CompTable() {
                                             scope="row"
                                             padding="none"
                                         >
-                                            {row.name}
+                                            {row.username}
                                         </TableCell>
-                                        <TableCell align="right">{row.calories}</TableCell>
-                                        <TableCell align="right">{row.fat}</TableCell>
-                                        <TableCell align="right">{row.carbs}</TableCell>
-                                        <TableCell align="right">{row.protein}</TableCell>
+                                        <TableCell align="left">{row.email}</TableCell>
+                                        <TableCell align="left">{row.phone_number}</TableCell>
+                                        <TableCell align="left">{row.role}</TableCell>
+                                        <TableCell align="left">
+                                            <Button variant="contained" onClick={() => router.push(`/users/update-user/${row.user_id}`)}>Edit</Button>
+                                        </TableCell>
                                     </TableRow>
                                 );
                             })}
@@ -335,17 +330,13 @@ export default function CompTable() {
                 <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
-                    count={rows.length}
+                    count={data.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
                 />
             </Paper>
-            {/* <FormControlLabel
-                control={<Switch checked={dense} onChange={handleChangeDense} />}
-                label="Dense padding"
-            /> */}
         </Box>
     );
 }

@@ -1,5 +1,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
+import { ProviderQuery } from "@/hooks/provider";
+import { Toaster } from "sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -23,7 +25,10 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ProviderQuery>
+          <Toaster position="top-center" richColors />
+          {children}
+        </ProviderQuery>
       </body>
     </html>
   );
