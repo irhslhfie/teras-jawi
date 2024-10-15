@@ -8,20 +8,15 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
-import TableUsers from "./components/TableUsers";
+import TablePlaystations from "./components/TablePlaystations";
+import { useGetPlaystationAll } from "@/hooks/playstation/usePlaystation";
 
-const myData = [
-    { id: 1, name: 'Frozen yogurt', calories: 159, fat: 6, carbs: 24, protein: 4 },
-    { id: 2, name: 'Ice cream sandwich', calories: 237, fat: 9, carbs: 37, protein: 4.3 },
-    // ... data lainnya
-];
-
-export default function Users() {
+export default function Playstation() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
-    const { data: dataUsers, isLoading, isSuccess, error, refetch: refetchUsers } = useGetUsersAll({
-        name: searchQuery,
-        role: searchQuery
+    const { data: dataPlaystation, isLoading, isSuccess, error, refetch: refetchUsers } = useGetPlaystationAll({
+        ps_type: searchQuery,
+        status: searchQuery
     });
 
     const handleSearch = (e) => {
@@ -29,12 +24,12 @@ export default function Users() {
     };
 
     useEffect(() => {
-        if (dataUsers) {
-            console.log('Cek data users ===> ', dataUsers)
+        if (dataPlaystation) {
+            console.log('Cek data playstation ===> ', dataPlaystation)
         } else {
             console.log('YAAHAHAHAH ERRRORRR LUUUU')
         }
-    }, [dataUsers])
+    }, [dataPlaystation])
 
 
     return (
@@ -45,11 +40,11 @@ export default function Users() {
                         <Button
                             variant="contained"
                             endIcon={<AddIcon />}
-                            onClick={() => router.push('/users/tambah-user')}
-                        >Tambah User</Button>
+                            onClick={() => router.push('/playstation/tambah-playstation')}
+                        >Tambah</Button>
                     </Box>
-                    {dataUsers && (
-                        <TableUsers data={dataUsers} tableTitle={'Tabel Data Users'} />
+                    {dataPlaystation && (
+                        <TablePlaystations data={dataPlaystation} tableTitle={'Tabel Data PlayStations'} />
                     )}
                 </div>
             </Layout>

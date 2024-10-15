@@ -5,32 +5,30 @@ import Layout from '@/components/layout';
 import { useCreateAdmin, useGetUserById, useUpdateUser } from '@/hooks/admin/useAdmin';
 import { useRouter, useParams } from "next/navigation";
 import AuthWrapper from '@/helpers/AuthWrapper';
+import { useGetBranchById, useUpdateBranch } from '@/hooks/branch/useBranches';
 
-const UpdateUser = () => {
+const UpdateBranch = () => {
     const router = useRouter();
     const param = useParams();
-    const { user_id } = param;
+    const { branch_id } = param;
     const [formData, setFormData] = useState({
-        username: '',
-        // password: '',
-        email: '',
-        phone_number: ''
+        branch_name: '',
+        address: ''
     });
-    const { data: dataUser, isLoading, error, isSuccess: dataUserSukses } = useGetUserById({
-        user_id: user_id
+    const { data: dataCabang, isLoading, error, isSuccess: dataCabangSukses } = useGetBranchById({
+        branch_id: branch_id
     });
 
     useEffect(() => {
-        if (dataUser) {
+        if (dataCabang) {
             setFormData({
-                username: dataUser?.username,
-                email: dataUser?.email,
-                phone_number: dataUser?.phone_number
+                branch_name: dataCabang?.branch_name,
+                address: dataCabang?.address
             })
         } else {
-            console.log(error + "Data User error")
+            console.log(error + "Data Cabang error")
         }
-    }, [dataUserSukses])
+    }, [dataCabangSukses])
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -40,20 +38,17 @@ const UpdateUser = () => {
         });
     };
 
-    const updateUser = useUpdateUser({
-        user_id: user_id
+    const updateBranch = useUpdateBranch({
+        branch_id: branch_id
     });
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Cek Data Input---', formData);
 
         try {
-            await updateUser.mutateAsync({
-                // username: formData?.username,
-                // password: formData?.password,
-                email: formData?.email,
-                phone_number: formData?.phone_number,
-                // contact_number: String(formData?.contact_number),
+            await updateBranch.mutateAsync({
+                branch_name: formData?.branch_name,
+                address: formData?.address
             })
             router.back();
         } catch (error) {
@@ -68,40 +63,29 @@ const UpdateUser = () => {
             <Layout>
                 <Box sx={{ maxWidth: 400, mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
                     <Typography variant="h5" gutterBottom>
-                        Update Data User
+                        Update Data Cabang Tama Game
                     </Typography>
                     <form onSubmit={handleSubmit}>
                         <TextField
-                            label="Username"
-                            name="username"
-                            value={formData.username}
-                            // onChange={handleChange}
-                            fullWidth
-                            required
-                            margin="normal"
-                            disabled
-                        />
-                        <TextField
-                            label="Email"
-                            type="email"
-                            name="email"
-                            value={formData.email}
+                            label="Nama Cabang"
+                            name="branch_name"
+                            value={formData.branch_name}
                             onChange={handleChange}
                             fullWidth
                             required
                             margin="normal"
                         />
                         <TextField
-                            label="Nomor Telepon"
-                            name="phone_number"
-                            value={formData.phone_number}
+                            label="Alamat"
+                            name="address"
+                            value={formData.address}
                             onChange={handleChange}
                             fullWidth
                             required
                             margin="normal"
                         />
                         <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2 }}>
-                            Update User
+                            Update Data Cabang
                         </Button>
                     </form>
                 </Box>
@@ -110,4 +94,4 @@ const UpdateUser = () => {
     );
 };
 
-export default UpdateUser;
+export default UpdateBranch;

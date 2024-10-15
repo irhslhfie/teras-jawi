@@ -19,7 +19,11 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import Popover from '@mui/material/Popover';
+import Button from '@mui/material/Button';
+import LogoutIcon from '@mui/icons-material/Logout';
 import CompBreadcrumbs from './Breadcumbs';
+import { toast } from "sonner";
 
 const drawerWidth = 240;
 
@@ -36,12 +40,33 @@ const AppBar = styled(MuiAppBar, {
 
 export default function Layout({ children }) {
     const router = useRouter();
-    const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleAvatarClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseAvatar = () => {
+        setAnchorEl(null);
+    };
+
+    const open = Boolean(anchorEl);
+    const idPopover = open ? 'simple-popover' : undefined;
 
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
+
+    const handleLogout = () => {
+        if (!localStorage.getItem("token") && !localStorage.getItem("role")) {
+            router.push("/auth/signin");
+        }
+        localStorage.clear();
+        router.push("/auth/signin");
+        toast.success('Log Out Berhasil');
+    }
 
     // Function to check if the path is active
     const isActive = (path) => pathname === path;
@@ -82,10 +107,35 @@ export default function Layout({ children }) {
                         <span style={{ color: 'black' }}>Game</span>
                     </Typography>
 
-                    <Tooltip title="Open settings">
-                        <IconButton sx={{ p: 0 }}>
+                    <Tooltip>
+                        <IconButton
+                            sx={{ p: 0 }}
+                            onClick={handleAvatarClick}
+                        >
                             <Avatar alt="Travis Howard" src="/ame.jpg" />
                         </IconButton>
+                        <Popover
+                            id={idPopover}
+                            open={open}
+                            anchorEl={anchorEl}
+                            onClose={handleCloseAvatar}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                            }}
+                            sx={{ mt: 1 }}
+                            PaperProps={{
+                                sx: {
+                                    borderRadius: '10px',  // Apply borderRadius to the Paper
+                                },
+                            }}
+                        >
+                            <Box sx={{ p: 1 }}>  {/* Added padding here */}
+                                <Button variant="text" startIcon={<LogoutIcon />} onClick={handleLogout}>
+                                    Log Out
+                                </Button>
+                            </Box>
+                        </Popover>
                     </Tooltip>
                 </Toolbar>
             </AppBar>
