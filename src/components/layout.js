@@ -18,12 +18,14 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Popover from '@mui/material/Popover';
 import Button from '@mui/material/Button';
 import LogoutIcon from '@mui/icons-material/Logout';
 import CompBreadcrumbs from './Breadcumbs';
 import { toast } from "sonner";
+import Badge from '@mui/material/Badge';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
 const drawerWidth = 240;
 
@@ -43,6 +45,21 @@ export default function Layout({ children }) {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [userFullname, setUserFullname] = useState('-');
+    const [userRole, setUserRole] = useState('-');
+
+    useEffect(() => {
+        const fullname = localStorage.getItem("fullname");
+        const role = localStorage.getItem("role");
+
+        if (fullname) {
+            setUserFullname(JSON.parse(fullname));
+        }
+
+        if (role) {
+            setUserRole(JSON.parse(role));
+        }
+    }, []);
 
     const handleAvatarClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -85,7 +102,7 @@ export default function Layout({ children }) {
             {/* AppBar */}
             <AppBar component="nav" position="fixed" color="inherit" elevation={0} sx={{ borderBottom: '1px solid #e0e0e0' }}>
                 <Toolbar
-                    sx={{ backgroundColor: 'inherit', minWidth: '100vw' }}
+                    sx={{ backgroundColor: 'inherit', minWidth: '100vw', justifyContent: 'space-between' }}
                 >
                     <MenuOpenIcon
                         color="inherit"
@@ -94,26 +111,35 @@ export default function Layout({ children }) {
                         onClick={handleDrawerToggle}
                         sx={{ mr: 2, display: { xs: 'block', md: 'none' } }}
                     />
-                    <Avatar
-                        alt="Tama Game"
-                        src="/images/web/icon-192.png"
-                        sx={{ width: 45, height: 45, mr: 1 }}
-                    />
-                    <Typography
-                        component="div"
-                        sx={{ flexGrow: 1, display: 'block', fontSize: '1.25rem', fontWeight: 800 }}
-                    >
-                        <span style={{ color: '#1565c0' }}>Tama</span>
-                        <span style={{ color: 'black' }}>Game</span>
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar
+                            alt="Tama Game"
+                            src="/images/web/icon-192.png"
+                            sx={{ width: 45, height: 45, mr: 1 }}
+                        />
+                        <Typography
+                            component="div"
+                            sx={{ fontSize: '1.25rem', fontWeight: 800 }}
+                        >
+                            <span style={{ color: '#1565c0' }}>Tama</span>
+                            <span style={{ color: 'black' }}>Game</span>
+                        </Typography>
+                    </Box>
 
-                    <Tooltip>
+                    <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', mr: 3 }}>
+                        <Badge color="secondary" variant="dot">
+                            <NotificationsIcon />
+                        </Badge>
                         <IconButton
-                            sx={{ p: 0 }}
+                            sx={{ p: 0, mr: 1.5, ml: 3 }}
                             onClick={handleAvatarClick}
                         >
                             <Avatar alt="Travis Howard" src="/ame.jpg" />
                         </IconButton>
+                        <Box>
+                            <p className='text-[#404040] text-sm font-bold capitalize'>{userFullname}</p>
+                            <p className='text-[#565656] text-xs font-semibold capitalize'>{userRole}</p>
+                        </Box>
                         <Popover
                             id={idPopover}
                             open={open}
@@ -126,17 +152,18 @@ export default function Layout({ children }) {
                             sx={{ mt: 1 }}
                             PaperProps={{
                                 sx: {
-                                    borderRadius: '10px',  // Apply borderRadius to the Paper
+                                    borderRadius: '10px',
                                 },
                             }}
                         >
-                            <Box sx={{ p: 1 }}>  {/* Added padding here */}
+                            <Box sx={{ p: 1 }}>
                                 <Button variant="text" startIcon={<LogoutIcon />} onClick={handleLogout}>
                                     Log Out
                                 </Button>
                             </Box>
                         </Popover>
-                    </Tooltip>
+                    </Box>
+
                 </Toolbar>
             </AppBar>
 
@@ -210,7 +237,14 @@ export default function Layout({ children }) {
             </Drawer>
 
             {/* Sidebar Drawer for Mobile */}
-            <SidebarMobile mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} />
+            <SidebarMobile
+                mobileOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+                handleLogout={handleLogout}
+                userFullname={userFullname}
+                userRole={userRole}
+                userAvatar={'/ame.jpg'}
+            />
 
             <Box
                 component="main"
@@ -222,9 +256,11 @@ export default function Layout({ children }) {
                 }}
             >
                 <Toolbar />
-                {/* <CompBreadcrumbs /> */}
-                {children}
+                <CompBreadcrumbs menuItems={menuItems} />
+                <div className='mt-10'>
+                    {children}
+                </div>
             </Box>
-        </Box>
+        </Box >
     );
 }

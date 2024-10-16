@@ -56,7 +56,7 @@ const UpdateBranch = () => {
         }
     };
 
-    console.log(JSON.stringify(formData))
+    console.log(JSON.stringify(formData));
 
     return (
         <AuthWrapper allowedRoles={["admin"]}>

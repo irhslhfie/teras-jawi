@@ -20,6 +20,8 @@ export const useLogin = () => {
           localStorage.setItem("token", JSON.stringify(data.token));
         typeof window !== "undefined" &&
           localStorage.setItem("role", JSON.stringify(data.user.role));
+        typeof window !== "undefined" &&
+          localStorage.setItem("fullname", JSON.stringify(data.user.username));
         const role = JSON.parse(localStorage.getItem("role"));
         if (role === "admin") {
           toast.success("Login Success");
