@@ -100,7 +100,7 @@ const AddRental = () => {
                 if (rentalHours >= 3) return 12000 + (rentalHours - 3) * 3000; // 3 jam ke atas
             }
 
-            if (ps_type === 'PS4' && rental_type === 'take-home') {
+            if (ps_type === 'PS3' && rental_type === 'take-home') {
                 if (rentalHours === 12) return 50000;
                 if (rentalHours === 24) return 90000;
             }
