@@ -12,48 +12,72 @@ const UpdateUser = () => {
     const { user_id } = param;
     const [formData, setFormData] = useState({
         username: '',
-        // password: '',
+        full_name: '',
         email: '',
-        phone_number: ''
+        phone_number: '',
+        role: '',
+        branch_id: ''
     });
+    const [errors, setErrors] = useState({});
     const { data: dataUser, isLoading, error, isSuccess: dataUserSukses } = useGetUserById({
         user_id: user_id
     });
+
+    // Fungsi Validasi
+    const validateForm = () => {
+        const newErrors = {};
+        const { full_name, email, phone_number } = formData;
+
+        if (!full_name) newErrors.full_name = 'Nama lengkap wajib diisi.';
+        if (!email) newErrors.email = 'Email wajib diisi.';
+        if (!phone_number) newErrors.phone_number = 'Nomor telepon wajib diisi.';
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     useEffect(() => {
         if (dataUser) {
             setFormData({
                 username: dataUser?.username,
+                full_name: dataUser?.full_name,
                 email: dataUser?.email,
-                phone_number: dataUser?.phone_number
-            })
+                phone_number: dataUser?.phone_number,
+                role: dataUser?.role,
+                branch_id: dataUser?.branch_id
+            });
         } else {
             console.log(error + "Data User error")
         }
-    }, [dataUserSukses])
+    }, [dataUserSukses, dataUser]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+    const handleChange = (key, value) => {
+        setFormData({ ...formData, [key]: value });
+
+        // Hapus error untuk field yang diubah
+        if (errors[key]) {
+            setErrors((prevErrors) => {
+                const newErrors = { ...prevErrors };
+                delete newErrors[key];
+                return newErrors;
+            });
+        }
     };
 
     const updateUser = useUpdateUser({
         user_id: user_id
     });
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Cek Data Input---', formData);
+
+        if (!validateForm()) return;
 
         try {
             await updateUser.mutateAsync({
-                // username: formData?.username,
-                // password: formData?.password,
+                full_name: formData?.full_name,
                 email: formData?.email,
                 phone_number: formData?.phone_number,
-                // contact_number: String(formData?.contact_number),
             })
             router.back();
         } catch (error) {
@@ -61,46 +85,37 @@ const UpdateUser = () => {
         }
     };
 
-    console.log(JSON.stringify(formData))
-
     return (
-        <AuthWrapper allowedRoles={["admin"]}>
+        <AuthWrapper allowedRoles={["admin", "owner"]}>
             <Layout>
-                <Box sx={{ maxWidth: 400, mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
-                    <Typography variant="h5" gutterBottom>
+                <Box sx={{ maxWidth: '100%', mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
+                    <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
                         Update Data User
                     </Typography>
                     <form onSubmit={handleSubmit}>
-                        <TextField
-                            label="Username"
-                            name="username"
-                            value={formData.username}
-                            // onChange={handleChange}
-                            fullWidth
-                            required
-                            margin="normal"
-                            disabled
-                        />
-                        <TextField
-                            label="Email"
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            fullWidth
-                            required
-                            margin="normal"
-                        />
-                        <TextField
-                            label="Nomor Telepon"
-                            name="phone_number"
-                            value={formData.phone_number}
-                            onChange={handleChange}
-                            fullWidth
-                            required
-                            margin="normal"
-                        />
-                        <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2 }}>
+                        <div className="space-y-4">
+                            {Object.entries({
+                                username: 'Username',
+                                full_name: 'Full Name',
+                                email: 'Email',
+                                phone_number: 'Phone Number',
+                                role: 'Role'
+                            }).map(([key, label]) => (
+                                <TextField
+                                    key={key}
+                                    fullWidth
+                                    label={label}
+                                    type={key.includes('password') || key.includes('confirmPassword') ? 'password' : 'text'}
+                                    value={formData[key] === 'owner' ? 'Pemilik' : formData[key] === 'admin' ? 'Admin' : formData[key]}
+                                    onChange={(e) => handleChange(key, e.target.value)}
+                                    error={!!errors[key]}
+                                    helperText={errors[key]}
+                                    disabled={key.includes('username') || key.includes('role') ? true : false}
+                                />
+                            ))}
+                        </div>
+
+                        <Button variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
                             Update User
                         </Button>
                     </form>

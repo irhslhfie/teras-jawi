@@ -1,21 +1,30 @@
-"use client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 
 const AuthWrapper = ({ children, allowedRoles }) => {
   const router = useRouter();
-  const role = typeof window !== "undefined" && localStorage.getItem("role");
+  const token = typeof window !== "undefined" && localStorage.getItem("token");
 
   useEffect(() => {
-    if (!role) {
+    if (!token) {
       router.push("/auth/signin");
     } else {
-      const data = JSON.parse(role);
-      if (!allowedRoles.includes(data)) {
-        router.push("/unauthorized");
+      const decodedToken = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      if (decodedToken.exp < currentTime) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("fullname");
+        router.push("/auth/signin");
+      } else {
+        const role = JSON.parse(localStorage.getItem("role"));
+        if (!allowedRoles.includes(role)) {
+          router.push("/unauthorized");
+        }
       }
     }
-  }, [role, allowedRoles, router]);
+  }, [token, allowedRoles, router]);
 
   return <>{children}</>;
 };

@@ -3,7 +3,7 @@ import { api } from "@/helpers";
 import { toast } from "sonner";
 
 export const useGetPlaystationAll = (props) => {
-    const { ps_type, status } = props;
+    const { ps_type, branch_name } = props;
     const { data, isSuccess, isLoading, error, refetch } = useQuery({
         queryKey: ["playstation-all"],
         queryFn: async () => {
@@ -13,8 +13,8 @@ export const useGetPlaystationAll = (props) => {
                 queryParams += `?ps_type=${ps_type}`;
             }
 
-            if (status) {
-                queryParams += queryParams ? `&status=${status}` : `?status=${status}`;
+            if (branch_name) {
+                queryParams += queryParams ? `&branch_name=${branch_name}` : `?branch_name=${branch_name}`;
             }
 
             const response = await api.get(`/playstation${queryParams}`);

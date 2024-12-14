@@ -1,120 +1,182 @@
 'use client';
 
 import { useState } from 'react';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Container from '@mui/material/Container';
+import { TextField, Button, Checkbox, FormControlLabel } from '@mui/material';
+import { Google as GoogleIcon, Visibility, VisibilityOff } from '@mui/icons-material';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import AuthLayout from '../components/auth-layout';
+import Image from 'next/image';
+import Backdrop from '@mui/material/Backdrop';
+import Fade from '@mui/material/Fade';
 import CircularProgress from '@mui/material/CircularProgress';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import { useRouter } from "next/navigation";
 import { useLogin } from '@/hooks/auth/useLogin';
+import Typography from '@mui/material/Typography';
 
-const SignIn = () => {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [backdropOpen, setBackdropOpen] = useState(false);
     const { mutate, isError } = useLogin();
 
     const handleLogin = (e) => {
         e.preventDefault();
-        mutate({ username, password });
+        if (
+            username === '' ||
+            password === ''
+        ) {
+            return toast.warning('Silahkan isi username dan password anda dengan benar!')
+        }
+
+        mutate({ username, password }, {
+            onSuccess: () => {
+                setBackdropOpen(true);
+            }
+        });
     };
 
     return (
-        <Container component="main" maxWidth="xs">
-            <Card sx={{ mt: 12, boxShadow: 3, px: 2, borderRadius: 3 }}>
-                <CardContent>
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Avatar sx={{ my: 1, mb: 2, bgcolor: 'primary.main' }}>
-                            <LockOutlinedIcon />
-                        </Avatar>
+        <AuthLayout>
+            <div className="space-y-8">
+                {/* Logo */}
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full overflow-hidden">
+                        <Image
+                            src="/images/web/tama_game_icon.png" // Add your logo to public folder
+                            alt="Tama Game"
+                            width={32}
+                            height={32}
+                        />
+                    </div>
+                    <span className="font-semibold">Tama Game</span>
+                </div>
 
-                        <Typography variant="h5" color="textPrimary" gutterBottom textAlign="center">
-                            Sign in
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary" gutterBottom textAlign="center">
-                            Welcome user, please sign in to continue
-                        </Typography>
+                {/* Heading */}
+                <div>
+                    <h2 className="text-2xl font-semibold text-gray-900">
+                        Senang bertemu denganmu kembali!
+                    </h2>
+                </div>
 
-                        {error && (
-                            <Typography variant="body2" color="error" gutterBottom textAlign="center">
-                                {error}
-                            </Typography>
-                        )}
+                {/* Form */}
+                <form onSubmit={handleLogin} className="space-y-6">
+                    <div className="space-y-4">
+                        <TextField
+                            fullWidth
+                            label="Username"
+                            variant="outlined"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    backgroundColor: '#F3F4F6',
+                                }
+                            }}
+                        />
 
-                        <Box component="form" onSubmit={handleLogin} sx={{ mt: 2 }}>
-                            <TextField
-                                margin="dense"
-                                required
-                                fullWidth
-                                id="username"
-                                label="Username"
-                                name="username"
-                                type="text"
-                                autoFocus
-                                onChange={(e) => setUsername(e.target.value)}
-                            />
-                            <TextField
-                                margin="dense"
-                                required
-                                fullWidth
-                                name="password"
-                                label="Password"
-                                type="password"
-                                id="password"
-                                autoComplete="current-password"
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
+                        <TextField
+                            fullWidth
+                            label="Password"
+                            type={showPassword ? 'text' : 'password'}
+                            variant="outlined"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            InputProps={{
+                                endAdornment: (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </button>
+                                ),
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    backgroundColor: '#F3F4F6',
+                                }
+                            }}
+                        />
+                    </div>
 
-                            <Button
-                                type="submit"
-                                fullWidth
-                                size="large"
-                                variant="contained"
-                                disableElevation
-                                disabled={loading} // Disable button when loading
-                                sx={{
-                                    mt: 3,
-                                    mb: 2,
-                                    textTransform: 'capitalize',
-                                    position: 'relative',
-                                }}
-                            >
-                                {loading ? (
-                                    <CircularProgress
-                                        size={24}
-                                        sx={{
-                                            color: 'white',
-                                            position: 'absolute',
-                                            left: '50%',
-                                            top: '50%',
-                                            marginTop: '-12px',
-                                            marginLeft: '-12px',
-                                        }}
-                                    />
-                                ) : (
-                                    'Sign in'
-                                )}
-                            </Button>
-                        </Box>
-                    </Box>
-                </CardContent>
-            </Card>
-        </Container>
+                    <div className="flex items-center justify-between">
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    color="primary"
+                                />
+                            }
+                            label="Remember me"
+                        />
+                        <Link
+                            href="/auth/forgot-password"
+                            className="text-blue-600 hover:text-blue-500 text-sm"
+                        >
+                            Lupa password?
+                        </Link>
+                    </div>
+
+                    <div className="space-y-3">
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            sx={{
+                                backgroundColor: '#0066FF',
+                                '&:hover': {
+                                    backgroundColor: '#0052CC',
+                                },
+                                textTransform: 'none',
+                                py: 1.5,
+                            }}
+                        >
+                            Log In
+                        </Button>
+
+                        {/* <Button
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<GoogleIcon />}
+                            sx={{
+                                borderColor: '#E5E7EB',
+                                color: '#374151',
+                                '&:hover': {
+                                    borderColor: '#D1D5DB',
+                                    backgroundColor: '#F9FAFB',
+                                },
+                                textTransform: 'none',
+                                py: 1.5,
+                            }}
+                        >
+                            Or sign in with Google
+                        </Button> */}
+                    </div>
+                </form>
+
+                <div className="text-center text-sm">
+                    <span className="text-gray-600">Belum punya akun?</span>{' '}
+                    <Link href="/auth/signup" className="text-blue-600 hover:text-blue-500">
+                        Buat akun sekarang
+                    </Link>
+                </div>
+            </div>
+
+            {/* Backdrop untuk menampilkan loading */}
+            <Backdrop
+                open={backdropOpen}
+                onClick={() => setBackdropOpen(false)}
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            >
+                <Fade in={backdropOpen}>
+                    <CircularProgress color="inherit" />
+                </Fade>
+            </Backdrop>
+        </AuthLayout>
     );
-};
+}
 
-export default SignIn;

@@ -1,28 +1,45 @@
 'use client';
-import { useState } from 'react';
-import { TextField, Button, Box, Typography } from '@mui/material';
 import Layout from '@/components/layout';
-import { useCreateAdmin } from '@/hooks/admin/useAdmin';
-import { useRouter } from "next/navigation";
 import AuthWrapper from '@/helpers/AuthWrapper';
+import { useGetBranchAll } from '@/hooks/branch/useBranches';
+import { useGetPlaystationById, useUpdatePlaystation } from '@/hooks/playstation/usePlaystation';
+import { Box, Button, TextField, Typography } from '@mui/material';
+import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import { useGetBranchAll } from '@/hooks/branch/useBranches';
-import { useCreatePlaystation } from '@/hooks/playstation/usePlaystation';
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
 
-const AddPlaystation = () => {
+const UpdatePlaystation = () => {
     const router = useRouter();
+    const param = useParams();
+    const { ps_id } = param;
     const [formData, setFormData] = useState({
         branch_id: '',
         ps_type: '',
-        ps_number: ''
+        ps_number: '',
+        status: ''
+    });
+    const { data: dataPlaystation, isLoading, error, isSuccess: dataPlaystationSukses } = useGetPlaystationById({
+        ps_id: ps_id
     });
     const { data: dataCabang } = useGetBranchAll();
 
+    useEffect(() => {
+        if (dataPlaystation) {
+            setFormData({
+                branch_id: dataPlaystation?.branch_id,
+                ps_type: dataPlaystation?.ps_type,
+                ps_number: dataPlaystation?.ps_number,
+                status: dataPlaystation?.status
+            })
+        } else {
+            console.log(error + "Data PlayStation error")
+        }
+    }, [dataPlaystationSukses])
+
     const handleChange = (e) => {
-        console.log('TES abang ==> ', e.target)
         const { name, value } = e.target;
         setFormData({
             ...formData,
@@ -30,16 +47,19 @@ const AddPlaystation = () => {
         });
     };
 
-    const createPS = useCreatePlaystation();
+    const updatePlaystation = useUpdatePlaystation({
+        ps_id: ps_id
+    });
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Cek Data Input---', formData);
 
         try {
-            await createPS.mutateAsync({
+            await updatePlaystation.mutateAsync({
                 branch_id: formData?.branch_id,
                 ps_type: formData?.ps_type,
-                ps_number: formData?.ps_number
+                ps_number: formData?.ps_number,
+                status: formData?.status
             })
             router.back();
         } catch (error) {
@@ -47,12 +67,14 @@ const AddPlaystation = () => {
         }
     };
 
+    console.log(JSON.stringify(formData))
+
     return (
         <AuthWrapper allowedRoles={["admin", "owner"]}>
             <Layout>
-                <Box sx={{ width: '100%', mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
-                    <Typography variant="h5" gutterBottom sx={{ mb: 5 }}>
-                        Tambah Data Playstation
+                <Box sx={{ maxWidth: 400, mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
+                    <Typography variant="h5" gutterBottom>
+                        Update Data PlayStation
                     </Typography>
                     <form onSubmit={handleSubmit}>
                         <FormControl fullWidth>
@@ -65,10 +87,7 @@ const AddPlaystation = () => {
                                 label="Nama Cabang"
                                 onChange={handleChange}
                             >
-                                {dataCabang?.length <= 0 && (
-                                    <MenuItem value="">Belum ada data cabang!</MenuItem>
-                                )}
-                                {dataCabang?.length > 0 && dataCabang?.map((cabang) => (
+                                {dataCabang?.map((cabang) => (
                                     <MenuItem key={cabang?.branch_id} value={cabang?.branch_id}>{cabang?.branch_name}</MenuItem>
                                 ))}
                             </Select>
@@ -90,26 +109,29 @@ const AddPlaystation = () => {
                         <TextField
                             label="Nomor PS"
                             name="ps_number"
-                            value={formData.ps_number}
+                            value={formData?.ps_number}
                             onChange={handleChange}
                             fullWidth
                             required
                             margin="normal"
                         />
-                        <div className='flex justify-between mt-5'>
-                            <Button variant="contained" color="primary" type="submit" size="medium">
-                                Tambah PlayStation
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                size="medium"
-                                onClick={() => {
-                                    router.back();
-                                }}
+                        <FormControl fullWidth sx={{ mt: 2 }}>
+                            <InputLabel id="demo-simple-select-label">Status</InputLabel>
+                            <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={formData?.status}
+                                name="status"
+                                label="Status"
+                                onChange={handleChange}
                             >
-                                Batal
-                            </Button>
-                        </div>
+                                <MenuItem value={'available'}>Tersedia</MenuItem>
+                                <MenuItem value={'in_use'}>Sedang Digunakan</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2 }}>
+                            Update PlayStation
+                        </Button>
                     </form>
                 </Box>
             </Layout>
@@ -117,4 +139,4 @@ const AddPlaystation = () => {
     );
 };
 
-export default AddPlaystation;
+export default UpdatePlaystation;

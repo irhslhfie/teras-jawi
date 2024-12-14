@@ -1,6 +1,12 @@
-import * as React from 'react';
-import { alpha } from '@mui/material/styles';
+import GradientCircularProgress from '@/components/Progress';
+import { useDeletePlaystation } from '@/hooks/playstation/usePlaystation';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import { alpha } from '@mui/material/styles';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -10,19 +16,15 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import Checkbox from '@mui/material/Checkbox';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import { visuallyHidden } from '@mui/utils';
-import DeleteIcon from '@mui/icons-material/Delete';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import { useDeleteUser } from '@/hooks/admin/useAdmin';
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import GradientCircularProgress from '@/components/Progress';
+import { useState, useEffect, useMemo } from 'react';
+import { toast } from "sonner";
+import dayjs from "dayjs";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useConfirmBooking } from '@/hooks/booking/useBooking';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -45,37 +47,43 @@ const headCells = [
         id: 'full_name',
         numeric: false,
         disablePadding: true,
-        label: 'Nama Lengkap',
-    },
-    {
-        id: 'username',
-        numeric: false,
-        disablePadding: true,
-        label: 'Username',
+        label: 'Nama Pemesan',
     },
     {
         id: 'email',
         numeric: false,
-        disablePadding: false,
+        disablePadding: true,
         label: 'E-Mail',
     },
     {
-        id: 'phone_number',
+        id: 'ps_type',
         numeric: false,
-        disablePadding: false,
-        label: 'No HP',
+        disablePadding: true,
+        label: 'Tipe PS',
     },
     {
-        id: 'role',
+        id: 'ps_number',
         numeric: false,
-        disablePadding: false,
-        label: 'Role',
+        disablePadding: true,
+        label: 'Nomor PS',
     },
     {
-        id: 'action',
+        id: 'branch_name',
+        numeric: false,
+        disablePadding: true,
+        label: 'Nama Cabang',
+    },
+    {
+        id: 'booking_time',
+        numeric: false,
+        disablePadding: true,
+        label: 'Waktu Pemesanan',
+    },
+    {
+        id: 'status',
         numeric: false,
         disablePadding: false,
-        label: 'Action',
+        label: 'Konfirmasi Pemesanan',
     },
 ];
 
@@ -129,13 +137,13 @@ function EnhancedTableHead(props) {
 function EnhancedTableToolbar(props) {
     const { numSelected, title, itemSelected } = props;
 
-    const deleteUser = useDeleteUser();
+    const deleteUser = useDeletePlaystation();
     const handleDelete = () => {
-        const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus admin ini?');
+        const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus PlayStation ini?');
         if (confirmDelete) {
             console.log('Data yg dihapus ==> ', itemSelected)
-            itemSelected.forEach(user_id => {
-                deleteUser.mutate(user_id);
+            itemSelected.forEach(ps_id => {
+                deleteUser.mutate(ps_id);
             });
         } else {
             toast.info('Penghapusan dibatalkan');
@@ -198,14 +206,26 @@ function EnhancedTableToolbar(props) {
     );
 }
 
-export default function TableUsers({ data, tableTitle, isError, isLoading, role }) {
+export default function TableBookings({ data, tableTitle, isLoading, isError }) {
     const router = useRouter();
-    const [order, setOrder] = React.useState('asc');
-    const [orderBy, setOrderBy] = React.useState('calories');
-    const [selected, setSelected] = React.useState([]);
-    const [page, setPage] = React.useState(0);
-    const [dense, setDense] = React.useState(false);
-    const [rowsPerPage, setRowsPerPage] = React.useState(5);
+    const [order, setOrder] = useState('asc');
+    const [orderBy, setOrderBy] = useState('calories');
+    const [selected, setSelected] = useState([]);
+    const [page, setPage] = useState(0);
+    const [dense, setDense] = useState(false);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const confirmBooking = useConfirmBooking();
+
+    const handleConfirm = async (bookingId) => {
+        try {
+            await confirmBooking.mutateAsync({ booking_id: bookingId });
+            toast.success("Booking berhasil dikonfirmasi");
+        } catch (error) {
+            toast.error("Gagal mengonfirmasi booking");
+            console.error("Error Confirm Booking", error);
+        }
+    };
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -215,7 +235,7 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelected = data.map((n) => n.user_id);
+            const newSelected = data.map((n) => n.ps_id);
             setSelected(newSelected);
             return;
         }
@@ -253,21 +273,13 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
     const emptyRows =
         page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
 
-    const filteredData = React.useMemo(() => {
-        if (role === 'admin') {
-            return data.filter(item => item.role === 'member');
-        }
-        return data;
-    }, [data, role]);
-
-    const visibleRows = React.useMemo(
+    const visibleRows = useMemo(
         () =>
-            [...filteredData]
+            [...data]
                 .sort(getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-        [order, orderBy, page, rowsPerPage, filteredData],
+        [order, orderBy, page, rowsPerPage, data],
     );
-
 
     return (
         <Box sx={{ width: '100%' }}>
@@ -286,7 +298,7 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
                 {!isLoading && data.length === 0 && (
                     <div className='w-full flex justify-center items-center mt-10'>
                         <Typography variant="h6" color="#1565c0">
-                            Tidak ada data User yang tersedia.
+                            Tidak ada data Pemesanan yang tersedia.
                         </Typography>
                     </div>
                 )}
@@ -307,24 +319,24 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
                                     rowCount={data.length}
                                 />
                                 <TableBody>
-                                    {visibleRows?.map((row, index) => {
-                                        const isItemSelected = selected.includes(row.user_id);
+                                    {visibleRows.map((row, index) => {
+                                        const isItemSelected = selected.includes(row.ps_id);
                                         const labelId = `enhanced-table-checkbox-${index}`;
 
                                         return (
                                             <TableRow
                                                 hover
-                                                // onClick={(event) => handleClick(event, row.user_id)}
+                                                // onClick={(event) => handleClick(event, row.ps_id)}
                                                 role="checkbox"
                                                 // aria-checked={isItemSelected}
                                                 tabIndex={-1}
-                                                key={row.user_id}
+                                                key={row.ps_id}
                                                 // selected={isItemSelected}
                                                 sx={{ cursor: 'pointer' }}
                                             >
                                                 <TableCell padding="checkbox">
                                                     <Checkbox
-                                                        onClick={(event) => handleClick(event, row.user_id)}
+                                                        onClick={(event) => handleClick(event, row.ps_id)}
                                                         color="primary"
                                                         checked={isItemSelected}
                                                         inputProps={{
@@ -337,15 +349,24 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
                                                     id={labelId}
                                                     scope="row"
                                                     padding="none"
+                                                    align="left"
                                                 >
-                                                    {row.full_name}
+                                                    {row.full_name || '-'}
                                                 </TableCell>
-                                                <TableCell align="left">{row.username}</TableCell>
-                                                <TableCell align="left">{row.email}</TableCell>
-                                                <TableCell align="left">{row.phone_number}</TableCell>
-                                                <TableCell align="left">{row.role === 'owner' ? 'Pemilik' : row.role === 'member' ? 'Member' : 'Admin'}</TableCell>
+                                                <TableCell align="left">{row.email || '-'}</TableCell>
+                                                <TableCell align="left">{row.ps_type || '-'}</TableCell>
+                                                <TableCell align="left">{row.ps_number || '-'}</TableCell>
+                                                <TableCell align="left">{row.branch_name || '-'}</TableCell>
+                                                <TableCell align="left">{dayjs(row.booking_time).format('DD-MM-YYYY') || '-'}</TableCell>
                                                 <TableCell align="left">
-                                                    <Button variant="contained" onClick={() => router.push(`/users/update-user/${row.user_id}`)}>Edit</Button>
+                                                    <Button
+                                                        variant="contained"
+                                                        color="warning"
+                                                        onClick={() => handleConfirm(row.booking_id)} // Kirim booking_id sebagai parameter
+                                                        startIcon={<CheckCircleIcon />}
+                                                    >
+                                                        Konfirmasi
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -368,6 +389,7 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
                             count={data.length}
                             rowsPerPage={rowsPerPage}
                             page={page}
+                            labelRowsPerPage={"Jumlah Tampilan Data"}
                             onPageChange={handleChangePage}
                             onRowsPerPageChange={handleChangeRowsPerPage}
                         />

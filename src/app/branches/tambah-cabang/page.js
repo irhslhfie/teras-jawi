@@ -41,10 +41,10 @@ const AddBranch = () => {
     console.log(JSON.stringify(formData))
 
     return (
-        <AuthWrapper allowedRoles={["admin"]}>
+        <AuthWrapper allowedRoles={["admin", "owner"]}>
             <Layout>
-                <Box sx={{ maxWidth: 400, mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
-                    <Typography variant="h5" gutterBottom>
+                <Box sx={{ maxWidth: '100%', mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
+                    <Typography variant="h5" gutterBottom sx={{ mb: 5 }}>
                         Tambah Data Cabang Tama Game
                     </Typography>
                     <form onSubmit={handleSubmit}>
@@ -66,9 +66,20 @@ const AddBranch = () => {
                             required
                             margin="normal"
                         />
-                        <Button variant="contained" color="primary" type="submit" fullWidth sx={{ mt: 2 }}>
-                            Tambah Cabang
-                        </Button>
+                        <div className='flex justify-between mt-5'>
+                            <Button variant="contained" color="primary" type="submit" size="medium">
+                                Tambah Cabang
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                size="medium"
+                                onClick={() => {
+                                    router.back();
+                                }}
+                            >
+                                Batal
+                            </Button>
+                        </div>
                     </form>
                 </Box>
             </Layout>

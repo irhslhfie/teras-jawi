@@ -36,9 +36,11 @@ const RAW_RUNTIME_STATE =
           ["@tanstack/react-query", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:5.59.0"],\
           ["@toolpad/core", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:0.7.0"],\
           ["axios", "npm:1.7.7"],\
+          ["dayjs", "npm:1.11.13"],\
           ["eslint", "npm:8.57.1"],\
           ["eslint-config-next", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:14.2.14"],\
           ["jotai", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:2.10.0"],\
+          ["jwt-decode", "npm:4.0.0"],\
           ["next", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:14.2.14"],\
           ["postcss", "npm:8.4.47"],\
           ["react", "npm:18.3.1"],\
@@ -3523,9 +3525,11 @@ const RAW_RUNTIME_STATE =
           ["@tanstack/react-query", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:5.59.0"],\
           ["@toolpad/core", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:0.7.0"],\
           ["axios", "npm:1.7.7"],\
+          ["dayjs", "npm:1.11.13"],\
           ["eslint", "npm:8.57.1"],\
           ["eslint-config-next", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:14.2.14"],\
           ["jotai", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:2.10.0"],\
+          ["jwt-decode", "npm:4.0.0"],\
           ["next", "virtual:ce070012816cce22c653455025fba02676b4eca95b877486e564beb41a69b765113dee1151652bb7f2e9540a02a131ad09759fd046d7c7526a5b6508f03cdc47#npm:14.2.14"],\
           ["postcss", "npm:8.4.47"],\
           ["react", "npm:18.3.1"],\
@@ -3568,6 +3572,15 @@ const RAW_RUNTIME_STATE =
           ["call-bind", "npm:1.0.7"],\
           ["es-errors", "npm:1.3.0"],\
           ["is-data-view", "npm:1.0.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["dayjs", [\
+      ["npm:1.11.13", {\
+        "packageLocation": "../../../../../C:/Users/USER/AppData/Local/Yarn/Berry/cache/dayjs-npm-1.11.13-d478bb9479-10c0.zip/node_modules/dayjs/",\
+        "packageDependencies": [\
+          ["dayjs", "npm:1.11.13"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -5666,6 +5679,15 @@ const RAW_RUNTIME_STATE =
           ["array.prototype.flat", "npm:1.3.2"],\
           ["object.assign", "npm:4.1.5"],\
           ["object.values", "npm:1.2.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["jwt-decode", [\
+      ["npm:4.0.0", {\
+        "packageLocation": "../../../../../C:/Users/USER/AppData/Local/Yarn/Berry/cache/jwt-decode-npm-4.0.0-4cd8e89909-10c0.zip/node_modules/jwt-decode/",\
+        "packageDependencies": [\
+          ["jwt-decode", "npm:4.0.0"]\
         ],\
         "linkType": "HARD"\
       }]\

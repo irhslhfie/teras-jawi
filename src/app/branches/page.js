@@ -18,17 +18,8 @@ export default function Branches() {
         setSearchQuery(e.target.value);
     };
 
-    useEffect(() => {
-        if (dataCabang) {
-            console.log('Cek data Cabang ===> ', dataCabang)
-        } else {
-            console.log('YAAHAHAHAH ERRRORRR LUUUU')
-        }
-    }, [dataCabang])
-
-
     return (
-        <AuthWrapper allowedRoles={["admin"]}>
+        <AuthWrapper allowedRoles={["owner"]}>
             <Layout>
                 <div className="w-full">
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -36,11 +27,16 @@ export default function Branches() {
                             variant="contained"
                             endIcon={<AddIcon />}
                             onClick={() => router.push('/branches/tambah-cabang')}
-                        >Tambah Cabang</Button>
+                        >
+                            Tambah Cabang
+                        </Button>
                     </Box>
-                    {dataCabang && (
-                        <TableBranches data={dataCabang} tableTitle={'Tabel Data Cabang Rental Tama Game'} />
-                    )}
+                    <TableBranches
+                        data={dataCabang}
+                        tableTitle={'Tabel Data Cabang Rental Tama Game'}
+                        isLoading={isLoading}
+                        isError={error}
+                    />
                 </div>
             </Layout>
         </AuthWrapper>

@@ -1,6 +1,12 @@
-import * as React from 'react';
-import { alpha } from '@mui/material/styles';
+import GradientCircularProgress from '@/components/Progress';
+import { useDeletePlaystation } from '@/hooks/playstation/usePlaystation';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import { alpha } from '@mui/material/styles';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -10,19 +16,12 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import Checkbox from '@mui/material/Checkbox';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import { visuallyHidden } from '@mui/utils';
-import DeleteIcon from '@mui/icons-material/Delete';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import { useDeleteUser } from '@/hooks/admin/useAdmin';
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useDeletePlaystation } from '@/hooks/playstation/usePlaystation';
+import { useState, useEffect, useMemo } from 'react';
+import { toast } from "sonner";
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -192,14 +191,22 @@ function EnhancedTableToolbar(props) {
     );
 }
 
-export default function TablePlaystations({ data, tableTitle }) {
+export default function TablePlaystations({ data, tableTitle, isLoading, isError }) {
     const router = useRouter();
-    const [order, setOrder] = React.useState('asc');
-    const [orderBy, setOrderBy] = React.useState('calories');
-    const [selected, setSelected] = React.useState([]);
-    const [page, setPage] = React.useState(0);
-    const [dense, setDense] = React.useState(false);
-    const [rowsPerPage, setRowsPerPage] = React.useState(5);
+    const [order, setOrder] = useState('asc');
+    const [orderBy, setOrderBy] = useState('calories');
+    const [selected, setSelected] = useState([]);
+    const [page, setPage] = useState(0);
+    const [dense, setDense] = useState(false);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    // if (isLoading) {
+    //     return <GradientCircularProgress />;
+    // }
+
+    // if (isError) {
+    //     return <Typography color="error">Error fetching data: {isError.message}</Typography>;
+    // }
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -247,7 +254,7 @@ export default function TablePlaystations({ data, tableTitle }) {
     const emptyRows =
         page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
 
-    const visibleRows = React.useMemo(
+    const visibleRows = useMemo(
         () =>
             [...data]
                 .sort(getComparator(order, orderBy))
@@ -257,93 +264,114 @@ export default function TablePlaystations({ data, tableTitle }) {
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Paper sx={{ width: '100%', mb: 2 }}>
+            <Paper sx={{ width: '100%', mb: 2, minHeight: '40vh', borderRadius: '1rem', px: 2, py: 2 }}>
                 <EnhancedTableToolbar numSelected={selected.length} title={tableTitle} itemSelected={selected} />
-                <TableContainer>
-                    <Table
-                        sx={{ minWidth: 750 }}
-                        aria-labelledby="tableTitle"
-                        size={dense ? 'small' : 'medium'}
-                    >
-                        <EnhancedTableHead
-                            numSelected={selected.length}
-                            order={order}
-                            orderBy={orderBy}
-                            onSelectAllClick={handleSelectAllClick}
-                            onRequestSort={handleRequestSort}
-                            rowCount={data.length}
-                        />
-                        <TableBody>
-                            {visibleRows.map((row, index) => {
-                                const isItemSelected = selected.includes(row.ps_id);
-                                const labelId = `enhanced-table-checkbox-${index}`;
+                {isLoading && (
+                    <div className='w-full flex justify-center items-center mt-10'>
+                        <GradientCircularProgress />
+                    </div>
+                )}
+                {isError && (
+                    <div className='w-full flex justify-center items-center mt-10'>
+                        <Typography color="error">Error fetching data: {isError.message}</Typography>
+                    </div>
+                )}
+                {!isLoading && data.length === 0 && (
+                    <div className='w-full flex justify-center items-center mt-10'>
+                        <Typography variant="h6" color="#1565c0">
+                            Tidak ada data PlayStation yang tersedia.
+                        </Typography>
+                    </div>
+                )}
+                {!isLoading && data.length > 0 && (
+                    <>
+                        <TableContainer>
+                            <Table
+                                sx={{ minWidth: 750 }}
+                                aria-labelledby="tableTitle"
+                                size={dense ? 'small' : 'medium'}
+                            >
+                                <EnhancedTableHead
+                                    numSelected={selected.length}
+                                    order={order}
+                                    orderBy={orderBy}
+                                    onSelectAllClick={handleSelectAllClick}
+                                    onRequestSort={handleRequestSort}
+                                    rowCount={data.length}
+                                />
+                                <TableBody>
+                                    {visibleRows.map((row, index) => {
+                                        const isItemSelected = selected.includes(row.ps_id);
+                                        const labelId = `enhanced-table-checkbox-${index}`;
 
-                                return (
-                                    <TableRow
-                                        hover
-                                        // onClick={(event) => handleClick(event, row.ps_id)}
-                                        role="checkbox"
-                                        // aria-checked={isItemSelected}
-                                        tabIndex={-1}
-                                        key={row.ps_id}
-                                        // selected={isItemSelected}
-                                        sx={{ cursor: 'pointer' }}
-                                    >
-                                        <TableCell padding="checkbox">
-                                            <Checkbox
-                                                onClick={(event) => handleClick(event, row.ps_id)}
-                                                color="primary"
-                                                checked={isItemSelected}
-                                                inputProps={{
-                                                    'aria-labelledby': labelId,
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell
-                                            component="th"
-                                            id={labelId}
-                                            scope="row"
-                                            padding="none"
-                                            align="left"
+                                        return (
+                                            <TableRow
+                                                hover
+                                                // onClick={(event) => handleClick(event, row.ps_id)}
+                                                role="checkbox"
+                                                // aria-checked={isItemSelected}
+                                                tabIndex={-1}
+                                                key={row.ps_id}
+                                                // selected={isItemSelected}
+                                                sx={{ cursor: 'pointer' }}
+                                            >
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox
+                                                        onClick={(event) => handleClick(event, row.ps_id)}
+                                                        color="primary"
+                                                        checked={isItemSelected}
+                                                        inputProps={{
+                                                            'aria-labelledby': labelId,
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell
+                                                    component="th"
+                                                    id={labelId}
+                                                    scope="row"
+                                                    padding="none"
+                                                    align="left"
+                                                >
+                                                    {row.branch_name || '-'}
+                                                </TableCell>
+                                                <TableCell align="left">{row.ps_type || '-'}</TableCell>
+                                                <TableCell align="left">{row.ps_number || '-'}</TableCell>
+                                                <TableCell align="left">
+                                                    <span className={`py-2 px-4 ${row.status == 'available' ? 'bg-green-600' : 'bg-red-600'} text-white text-center rounded-2xl`}>
+                                                        {row.status == 'available' ? 'Tersedia'
+                                                            : row.status == 'in_use' ? 'Sedang Digunakan' : 'Dibooking'}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell align="left">
+                                                    <Button variant="contained" onClick={() => router.push(`/playstation/update-playstation/${row.ps_id}`)}>Edit</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                    {emptyRows > 0 && (
+                                        <TableRow
+                                            style={{
+                                                height: (dense ? 33 : 53) * emptyRows,
+                                            }}
                                         >
-                                            {row.branch_name || '-'}
-                                        </TableCell>
-                                        <TableCell align="left">{row.ps_type || '-'}</TableCell>
-                                        <TableCell align="left">{row.ps_number || '-'}</TableCell>
-                                        <TableCell align="left">
-                                            <span className={`py-2 px-4 ${row.status == 'available' ? 'bg-green-600' : 'bg-red-600'} text-white text-center rounded-2xl`}>
-                                                {row.status == 'available' ? 'Tersedia'
-                                                    : row.status == 'in_use' ? 'Sedang Digunakan' : '-'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell align="left">
-                                            <Button variant="contained" onClick={() => router.push(`/playstation/update-playstation/${row.ps_id}`)}>Edit</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                            {emptyRows > 0 && (
-                                <TableRow
-                                    style={{
-                                        height: (dense ? 33 : 53) * emptyRows,
-                                    }}
-                                >
-                                    <TableCell colSpan={6} />
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={data.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    labelRowsPerPage={"Jumlah Tampilan Data"}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
+                                            <TableCell colSpan={6} />
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={data.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            labelRowsPerPage={"Jumlah Tampilan Data"}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                        />
+                    </>
+                )}
             </Paper>
         </Box>
     );

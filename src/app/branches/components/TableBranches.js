@@ -1,3 +1,4 @@
+import GradientCircularProgress from '@/components/Progress';
 import { useDeleteBranch } from '@/hooks/branch/useBranches';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Box from '@mui/material/Box';
@@ -21,6 +22,9 @@ import { visuallyHidden } from '@mui/utils';
 import { useRouter } from "next/navigation";
 import * as React from 'react';
 import { toast } from "sonner";
+import dayjs from 'dayjs';
+import 'dayjs/locale/id';
+dayjs.locale('id');
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -50,6 +54,12 @@ const headCells = [
         numeric: false,
         disablePadding: false,
         label: 'Alamat',
+    },
+    {
+        id: 'created_at',
+        numeric: false,
+        disablePadding: false,
+        label: 'Dibuat Tanggal',
     },
     {
         id: 'action',
@@ -178,7 +188,7 @@ function EnhancedTableToolbar(props) {
     );
 }
 
-export default function TableBranches({ data, tableTitle }) {
+export default function TableBranches({ data, tableTitle, isLoading, isError }) {
     const router = useRouter();
     const [order, setOrder] = React.useState('asc');
     const [orderBy, setOrderBy] = React.useState('calories');
@@ -243,81 +253,103 @@ export default function TableBranches({ data, tableTitle }) {
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Paper sx={{ width: '100%', mb: 2 }}>
+            <Paper sx={{ width: '100%', mb: 2, minHeight: '40vh', borderRadius: '1rem', px: 2, py: 2 }}>
                 <EnhancedTableToolbar numSelected={selected.length} title={tableTitle} itemSelected={selected} />
-                <TableContainer>
-                    <Table
-                        sx={{ minWidth: 750 }}
-                        aria-labelledby="tableTitle"
-                        size={dense ? 'small' : 'medium'}
-                    >
-                        <EnhancedTableHead
-                            numSelected={selected.length}
-                            order={order}
-                            orderBy={orderBy}
-                            onSelectAllClick={handleSelectAllClick}
-                            onRequestSort={handleRequestSort}
-                            rowCount={data.length}
-                        />
-                        <TableBody>
-                            {visibleRows.map((row, index) => {
-                                const isItemSelected = selected.includes(row.branch_id);
-                                const labelId = `enhanced-table-checkbox-${index}`;
+                {isLoading && (
+                    <div className='w-full flex justify-center items-center mt-10'>
+                        <GradientCircularProgress />
+                    </div>
+                )}
+                {isError && (
+                    <div className='w-full flex justify-center items-center mt-10'>
+                        <Typography color="error">Error fetching data: {isError.message}</Typography>
+                    </div>
+                )}
+                {!isLoading && data.length === 0 && (
+                    <div className='w-full flex justify-center items-center mt-10'>
+                        <Typography variant="h6" color="#1565c0">
+                            Tidak ada data Cabang yang tersedia.
+                        </Typography>
+                    </div>
+                )}
+                {!isLoading && data.length > 0 && (
+                    <>
+                        <TableContainer>
+                            <Table
+                                sx={{ minWidth: 750 }}
+                                aria-labelledby="tableTitle"
+                                size={dense ? 'small' : 'medium'}
+                            >
+                                <EnhancedTableHead
+                                    numSelected={selected.length}
+                                    order={order}
+                                    orderBy={orderBy}
+                                    onSelectAllClick={handleSelectAllClick}
+                                    onRequestSort={handleRequestSort}
+                                    rowCount={data.length}
+                                />
+                                <TableBody>
+                                    {visibleRows.map((row, index) => {
+                                        const isItemSelected = selected.includes(row.branch_id);
+                                        const labelId = `enhanced-table-checkbox-${index}`;
 
-                                return (
-                                    <TableRow
-                                        hover
-                                        role="checkbox"
-                                        tabIndex={-1}
-                                        key={row.branch_id}
-                                        sx={{ cursor: 'pointer' }}
-                                    >
-                                        <TableCell padding="checkbox">
-                                            <Checkbox
-                                                onClick={(event) => handleClick(event, row.branch_id)}
-                                                color="primary"
-                                                checked={isItemSelected}
-                                                inputProps={{
-                                                    'aria-labelledby': labelId,
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell
-                                            component="th"
-                                            id={labelId}
-                                            scope="row"
-                                            padding="none"
+                                        return (
+                                            <TableRow
+                                                hover
+                                                role="checkbox"
+                                                tabIndex={-1}
+                                                key={row.branch_id}
+                                                sx={{ cursor: 'pointer' }}
+                                            >
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox
+                                                        onClick={(event) => handleClick(event, row.branch_id)}
+                                                        color="primary"
+                                                        checked={isItemSelected}
+                                                        inputProps={{
+                                                            'aria-labelledby': labelId,
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell
+                                                    component="th"
+                                                    id={labelId}
+                                                    scope="row"
+                                                    padding="none"
+                                                >
+                                                    {row.branch_name || '-'}
+                                                </TableCell>
+                                                <TableCell align="left">{row.address || '-'}</TableCell>
+                                                <TableCell align="left">{dayjs(row.created_at).format('DD MMMM YYYY') || '-'}</TableCell>
+                                                <TableCell align="left">
+                                                    <Button variant="contained" onClick={() => router.push(`/branches/update-cabang/${row.branch_id}`)}>Edit</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                    {emptyRows > 0 && (
+                                        <TableRow
+                                            style={{
+                                                height: (dense ? 33 : 53) * emptyRows,
+                                            }}
                                         >
-                                            {row.branch_name || '-'}
-                                        </TableCell>
-                                        <TableCell align="left">{row.address || '-'}</TableCell>
-                                        <TableCell align="left">
-                                            <Button variant="contained" onClick={() => router.push(`/branches/update-cabang/${row.branch_id}`)}>Edit</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                            {emptyRows > 0 && (
-                                <TableRow
-                                    style={{
-                                        height: (dense ? 33 : 53) * emptyRows,
-                                    }}
-                                >
-                                    <TableCell colSpan={6} />
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={data.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
+                                            <TableCell colSpan={6} />
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={data.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                        />
+                    </>
+                )}
             </Paper>
         </Box>
     );

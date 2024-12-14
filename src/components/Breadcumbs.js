@@ -42,8 +42,31 @@ export default function CompBreadcrumbs({ menuItems }) {
             )}
 
             {pathSegments.map((segment, index) => {
-                const matchedItem = menuItems.find(item => item.path.includes(segment));
+                const matchedItem = menuItems.find(item => item.path && item.path.includes(segment)); // Pastikan path ada
                 const isLast = index === pathSegments.length - 1;
+
+                if (!matchedItem) {
+                    // Jika tidak ada matchedItem, gunakan segment sebagai fallback
+                    return isLast ? (
+                        <Typography
+                            key={index}
+                            sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
+                            component="span"
+                        >
+                            {segment.replace('-', ' ')} {/* Format segment untuk lebih user-friendly */}
+                        </Typography>
+                    ) : (
+                        <Link
+                            key={index}
+                            underline="hover"
+                            sx={{ display: 'flex', alignItems: 'center' }}
+                            color="inherit"
+                            href={`/${pathSegments.slice(0, index + 1).join('/')}`}
+                        >
+                            {segment.replace('-', ' ')} {/* Format segment */}
+                        </Link>
+                    );
+                }
 
                 return isLast ? (
                     <Typography
@@ -51,12 +74,12 @@ export default function CompBreadcrumbs({ menuItems }) {
                         sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
                         component="span"
                     >
-                        {matchedItem?.icon && (
+                        {matchedItem.icon && (
                             <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: 'inherit' }}>
                                 {matchedItem.icon}
                             </ListItemIcon>
                         )}
-                        {matchedItem ? matchedItem.text : segment.replace('-', ' ')}
+                        {matchedItem.text}
                     </Typography>
                 ) : (
                     <Link
@@ -66,15 +89,16 @@ export default function CompBreadcrumbs({ menuItems }) {
                         color="inherit"
                         href={`/${pathSegments.slice(0, index + 1).join('/')}`}
                     >
-                        {matchedItem?.icon && (
+                        {matchedItem.icon && (
                             <ListItemIcon sx={{ mr: 1, minWidth: 'auto' }}>
                                 {matchedItem.icon}
                             </ListItemIcon>
                         )}
-                        {matchedItem ? matchedItem.text : segment.replace('-', ' ')}
+                        {matchedItem.text}
                     </Link>
                 );
             })}
+
         </Breadcrumbs>
     );
 }

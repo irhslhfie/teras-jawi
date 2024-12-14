@@ -5,13 +5,23 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import DomainAddIcon from '@mui/icons-material/DomainAdd';
+import HistoryIcon from '@mui/icons-material/History';
 
 export const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'PlayStation', icon: <PlayStationIcon />, path: '/playstation' },
-    { text: 'Cabang', icon: <DomainAddIcon />, path: '/branches' },
-    // { text: 'Booking Management', icon: <BookingIcon />, path: '/booking-management' },
-    // { text: 'Rental Transactions', icon: <RentalIcon />, path: '/rental-transactions' },
-    // { text: 'Payment Management', icon: <PaymentIcon />, path: '/payment-management' },
-    { text: 'Users', icon: <ManageAccountsIcon />, path: '/users' },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin', 'owner'] },
+    { text: 'PlayStation', icon: <PlayStationIcon />, path: '/playstation', roles: ['admin', 'owner'] },
+    { text: 'Cabang', icon: <DomainAddIcon />, path: '/branches', roles: ['owner'] },
+    { text: 'Pemesanan', icon: <BookingIcon />, path: '/bookings', roles: ['admin'] },
+    {
+        text: 'Penyewaan',
+        icon: <RentalIcon />,
+        roles: ['admin', 'owner'],
+        subItems: [
+            { text: 'Data Penyewaan', path: '/rentals', roles: ['admin', 'owner'] },
+            { text: 'Histori Penyewaan', path: '/rentals/history', roles: ['admin', 'owner'] }
+        ]
+    },
+    { text: 'Users', icon: <ManageAccountsIcon />, path: '/users', roles: ['admin', 'owner'] },
 ];
+
+

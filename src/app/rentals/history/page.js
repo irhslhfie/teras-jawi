@@ -8,41 +8,39 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from "react";
-import TablePlaystations from "./components/TablePlaystations";
 import MultipleSelectChip from "@/components/SelectInput";
 import { useGetBranchAll } from "@/hooks/branch/useBranches";
+import { useGetRentalDone } from "@/hooks/rentals/useRentals";
+import TableHistoryRentals from "./components/TableHistoryRentals";
 
 export default function Playstation() {
     const router = useRouter();
-    const [searchQueryPS, setsearchQueryPS] = useState([])
-    const [searchQuery, setSearchQuery] = useState('');
-    const [dataPSType, setDataPSType] = useState(['PS3', 'PS4', 'PS5']);
+    // const [searchQueryPS, setsearchQueryPS] = useState([])
+    // const [searchQuery, setSearchQuery] = useState('');
+    // const [dataPSType, setDataPSType] = useState(['PS3', 'PS4', 'PS5']);
 
-    const { data: dataBranch, isLoading: loadingBranch } = useGetBranchAll();
-    const { data: dataPlaystation, isLoading, isSuccess, error, refetch: refetchPlaystation } = useGetPlaystationAll({
-        ps_type: searchQueryPS,
-        branch_name: searchQuery
-    });
+    // const { data: dataBranch, isLoading: loadingBranch } = useGetBranchAll();
+    const { data: dataRental, isLoading, isSuccess, error } = useGetRentalDone();
 
-    useEffect(() => {
-        refetchPlaystation();
-    }, [searchQueryPS, searchQuery]);
+    // useEffect(() => {
+    //     refetchPlaystation();
+    // }, [searchQueryPS, searchQuery]);
 
 
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
-    };
+    // const handleSearch = (e) => {
+    //     setSearchQuery(e.target.value);
+    // };
 
-    const branchIds = useMemo(() => {
-        if (!dataBranch) return [];
-        return dataBranch.map(branch => branch.branch_name);
-    }, [dataBranch]);
+    // const branchIds = useMemo(() => {
+    //     if (!dataBranch) return [];
+    //     return dataBranch.map(branch => branch.branch_name);
+    // }, [dataBranch]);
 
     return (
         <AuthWrapper allowedRoles={["admin", "owner"]}>
             <Layout>
                 <div className="w-full">
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, px: 2 }}>
+                    {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, px: 2 }}>
                         <div className="flex space-x-2">
                             <MultipleSelectChip
                                 title={"Cari Jenis PS"}
@@ -72,11 +70,11 @@ export default function Playstation() {
                         >
                             Tambah
                         </Button>
-                    </Box>
+                    </Box> */}
 
-                    <TablePlaystations
-                        data={dataPlaystation}
-                        tableTitle={'Tabel Data PlayStations'}
+                    <TableHistoryRentals
+                        data={dataRental}
+                        tableTitle={'Tabel Data Histori Penyewaan'}
                         isLoading={isLoading}
                         isError={error} />
                 </div>
