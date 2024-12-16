@@ -131,7 +131,7 @@ const UpdateUser = () => {
                                 error={!!errors.branch_id}
                             >
                                 {dataBranch?.map((item, index) => (
-                                    <MenuItem value={item.branch_id}>{item.branch_name}</MenuItem>
+                                    <MenuItem key={index} value={item.branch_id}>{item.branch_name}</MenuItem>
                                 ))}
                             </Select>
                             {errors.branch_id && <Typography color="error" variant="caption">{errors.branch_id}</Typography>}
