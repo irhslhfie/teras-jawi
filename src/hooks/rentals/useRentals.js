@@ -54,25 +54,25 @@ export const useGetRentalActive = (props) => {
     return { data: result, isSuccess, isLoading, error, refetch };
 };
 
-export const useGetRentalDone = (props) => {
+export const useGetRentalDone = (startDate = null, branchId = null) => {
     const { data, isSuccess, isLoading, error, refetch } = useQuery({
-        queryKey: ["rental-all-done"],
+        queryKey: ["rental-all-done", startDate, branchId],
         queryFn: async () => {
-            const response = await api.get(`/rentals/done`);
-            const data = response.data;
-            return data;
+            const params = new URLSearchParams();
+            if (startDate) params.append("start_date", startDate);
+            if (branchId) params.append("branch_id", branchId);
+
+            console.log(`/rentals/done?${params.toString()}`);
+            const response = await api.get(`/rentals/done?${params.toString()}`);
+            return response.data;
         },
         onSuccess: (data) => {
             console.log('Get Data rental Sukses ----', data);
         },
         onError: (error) => {
-            toast.error(error.response.data.response.message);
-            console.log('Error Get Data');
-            console.log(error);
+            toast.error(error.response?.data?.response?.message || 'Error fetching rental data');
+            console.log('Error Get Data', error);
         },
-        refetchOnWindowFocus: true,
-        refetchOnReconnect: false,
-        refetchOnMount: true,
     });
 
     const result = data?.data || [];

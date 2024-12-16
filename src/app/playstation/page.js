@@ -17,17 +17,33 @@ export default function Playstation() {
     const [searchQueryPS, setsearchQueryPS] = useState([])
     const [searchQuery, setSearchQuery] = useState('');
     const [dataPSType, setDataPSType] = useState(['PS3', 'PS4', 'PS5']);
+    const [branchId, setBranchId] = useState(null);
+    const [userRole, setUserRole] = useState(null);
 
     const { data: dataBranch, isLoading: loadingBranch } = useGetBranchAll();
     const { data: dataPlaystation, isLoading, isSuccess, error, refetch: refetchPlaystation } = useGetPlaystationAll({
         ps_type: searchQueryPS,
-        branch_name: searchQuery
+        branch_name: searchQuery,
+        branch_id: branchId
     });
+
+    useEffect(() => {
+        const branchUser = localStorage.getItem("branch_user");
+        const roleUser = localStorage.getItem("role");
+
+        if (branchUser) {
+            setBranchId(JSON.parse(branchUser));
+        }
+        if (roleUser) {
+            setUserRole(JSON.parse(roleUser));
+        }
+    }, []);
 
     useEffect(() => {
         refetchPlaystation();
     }, [searchQueryPS, searchQuery]);
 
+    console.log('Cek data Branch User : ', branchId)
 
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
@@ -50,7 +66,7 @@ export default function Playstation() {
                                 personName={searchQueryPS}
                                 setPersonName={setsearchQueryPS}
                             />
-                            {!loadingBranch && dataBranch && (
+                            {!loadingBranch && dataBranch && userRole === 'owner' && (
                                 <MultipleSelectChip
                                     title={"Pilih Cabang"}
                                     names={branchIds}

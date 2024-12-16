@@ -216,9 +216,20 @@ const AddRental = () => {
                                 margin="normal"
                                 disabled
                             />
-                            <Button variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
-                                Tambah Penyewaan
-                            </Button>
+                            <div className='flex justify-between mt-5'>
+                                <Button variant="contained" color="primary" type="submit" size="medium">
+                                    Tambah Penyewaan
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    size="medium"
+                                    onClick={() => {
+                                        router.back();
+                                    }}
+                                >
+                                    Batal
+                                </Button>
+                            </div>
                         </form>
                     )}
                 </Box>

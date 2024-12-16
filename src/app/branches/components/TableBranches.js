@@ -24,6 +24,7 @@ import * as React from 'react';
 import { toast } from "sonner";
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
+import ConfirmationModal from '@/components/ConfirmationModal';
 dayjs.locale('id');
 
 function descendingComparator(a, b, orderBy) {
@@ -118,18 +119,23 @@ function EnhancedTableHead(props) {
 
 function EnhancedTableToolbar(props) {
     const { numSelected, title, itemSelected } = props;
-
     const deleteBranch = useDeleteBranch();
-    const handleDelete = () => {
-        const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus data cabang ini?');
-        if (confirmDelete) {
-            console.log('Data yg dihapus ==> ', itemSelected)
-            itemSelected.forEach(branch_id => {
-                deleteBranch.mutate(branch_id);
-            });
-        } else {
-            toast.info('Penghapusan dibatalkan');
-        }
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+    const handleDeleteClick = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleConfirmDelete = () => {
+        console.log('Data yg dihapus ==> ', itemSelected);
+        itemSelected.forEach(ps_id => {
+            deleteBranch.mutate(ps_id);
+        });
+        setIsModalOpen(false);
     };
 
     return (
@@ -166,11 +172,18 @@ function EnhancedTableToolbar(props) {
             )}
             {numSelected > 0 && (
                 <Tooltip title="Delete">
-                    <IconButton onClick={handleDelete}>
+                    <IconButton onClick={handleDeleteClick}>
                         <DeleteIcon />
                     </IconButton>
                 </Tooltip>
             )}
+            <ConfirmationModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                onConfirm={handleConfirmDelete}
+                title="Konfirmasi Penghapusan"
+                content="Apakah Anda yakin ingin menghapus Data Cabang ini?"
+            />
             {/* {numSelected > 0 ? (
                 <Tooltip title="Delete">
                     <IconButton onClick={handleDelete}>

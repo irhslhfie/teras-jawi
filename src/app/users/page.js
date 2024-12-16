@@ -32,7 +32,7 @@ export default function Users() {
 
 
     return (
-        <AuthWrapper allowedRoles={["admin", "owner"]}>
+        <AuthWrapper allowedRoles={["owner"]}>
             <Layout>
                 <div className="w-full">
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 2, px: 2 }}>
@@ -54,7 +54,13 @@ export default function Users() {
                             </>
                         )}
                     </Box>
-                    <TableUsers data={dataUsers || []} tableTitle={'Tabel Data Users'} isError={error} isLoading={isLoading} role={userRole} />
+                    <TableUsers
+                        data={dataUsers || []}
+                        tableTitle={'Tabel Data Users'}
+                        isError={error}
+                        isLoading={isLoading}
+                        role={userRole}
+                    />
                 </div>
             </Layout>
         </AuthWrapper>

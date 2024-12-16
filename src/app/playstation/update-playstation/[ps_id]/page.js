@@ -19,8 +19,7 @@ const UpdatePlaystation = () => {
     const [formData, setFormData] = useState({
         branch_id: '',
         ps_type: '',
-        ps_number: '',
-        status: ''
+        ps_number: ''
     });
     const { data: dataPlaystation, isLoading, error, isSuccess: dataPlaystationSukses } = useGetPlaystationById({
         ps_id: ps_id
@@ -32,8 +31,7 @@ const UpdatePlaystation = () => {
             setFormData({
                 branch_id: dataPlaystation?.playstation?.branch_id,
                 ps_type: dataPlaystation?.playstation?.ps_type,
-                ps_number: dataPlaystation?.playstation?.ps_number,
-                status: dataPlaystation?.playstation?.status
+                ps_number: dataPlaystation?.playstation?.ps_number
             })
         } else {
             console.log("Data PlayStation error")
@@ -59,8 +57,7 @@ const UpdatePlaystation = () => {
             await updatePlaystation.mutateAsync({
                 branch_id: formData?.branch_id,
                 ps_type: formData?.ps_type,
-                ps_number: formData?.ps_number,
-                status: formData?.status
+                ps_number: formData?.ps_number
             })
             router.back();
         } catch (error) {
@@ -130,20 +127,6 @@ const UpdatePlaystation = () => {
                                 required
                                 margin="normal"
                             />
-                            <FormControl fullWidth sx={{ mt: 2 }}>
-                                <InputLabel id="demo-simple-select-label">Status</InputLabel>
-                                <Select
-                                    labelId="demo-simple-select-label"
-                                    id="demo-simple-select"
-                                    value={formData?.status}
-                                    name="status"
-                                    label="Status"
-                                    onChange={handleChange}
-                                >
-                                    <MenuItem value={'available'}>Tersedia</MenuItem>
-                                    <MenuItem value={'in_use'}>Sedang Digunakan</MenuItem>
-                                </Select>
-                            </FormControl>
                             <div className='flex justify-between mt-5'>
                                 <Button variant="contained" color="primary" type="submit" size="medium">
                                     Update PlayStation

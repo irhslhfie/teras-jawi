@@ -22,6 +22,8 @@ export const useLogin = () => {
           localStorage.setItem("role", JSON.stringify(data.user.role));
         typeof window !== "undefined" &&
           localStorage.setItem("fullname", JSON.stringify(data.user.full_name));
+        typeof window !== "undefined" &&
+          localStorage.setItem("branch_user", JSON.stringify(data.user.branch_user));
         const role = JSON.parse(localStorage.getItem("role"));
         if (role === "admin") {
           setTimeout(() => {

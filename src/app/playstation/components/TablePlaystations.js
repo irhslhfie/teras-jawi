@@ -1,27 +1,17 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+    Box, Button, Checkbox, IconButton, Paper, Table, TableBody, TableCell,
+    TableContainer, TableHead, TablePagination, TableRow, TableSortLabel,
+    Toolbar, Tooltip, Typography
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { visuallyHidden } from '@mui/utils';
+import DeleteIcon from '@mui/icons-material/Delete';
 import GradientCircularProgress from '@/components/Progress';
 import { useDeletePlaystation } from '@/hooks/playstation/usePlaystation';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import { alpha } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
-import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-import { visuallyHidden } from '@mui/utils';
-import { useRouter } from "next/navigation";
-import { useState, useEffect, useMemo } from 'react';
-import { toast } from "sonner";
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -73,8 +63,7 @@ const headCells = [
 ];
 
 function EnhancedTableHead(props) {
-    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
-        props;
+    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } = props;
     const createSortHandler = (property) => (event) => {
         onRequestSort(event, property);
     };
@@ -121,73 +110,74 @@ function EnhancedTableHead(props) {
 
 function EnhancedTableToolbar(props) {
     const { numSelected, title, itemSelected } = props;
-
     const deleteUser = useDeletePlaystation();
-    const handleDelete = () => {
-        const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus PlayStation ini?');
-        if (confirmDelete) {
-            console.log('Data yg dihapus ==> ', itemSelected)
-            itemSelected.forEach(ps_id => {
-                deleteUser.mutate(ps_id);
-            });
-        } else {
-            toast.info('Penghapusan dibatalkan');
-        }
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleDeleteClick = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleConfirmDelete = () => {
+        console.log('Data yg dihapus ==> ', itemSelected);
+        itemSelected.forEach(ps_id => {
+            deleteUser.mutate(ps_id);
+        });
+        setIsModalOpen(false);
     };
 
     return (
-        <Toolbar
-            sx={[
-                {
-                    pl: { sm: 2 },
-                    pr: { xs: 1, sm: 1 },
-                },
-                numSelected > 0 && {
-                    bgcolor: (theme) =>
-                        alpha(theme.palette.primary.main, theme.palette.action.activatedOpacity),
-                },
-            ]}
-        >
-            {numSelected > 0 ? (
-                <Typography
-                    sx={{ flex: '1 1 100%' }}
-                    color="inherit"
-                    variant="subtitle1"
-                    component="div"
-                >
-                    {numSelected} selected
-                </Typography>
-            ) : (
-                <Typography
-                    sx={{ flex: '1 1 100%' }}
-                    variant="h6"
-                    id="tableTitle"
-                    component="div"
-                >
-                    {title}
-                </Typography>
-            )}
-            {numSelected > 0 && (
-                <Tooltip title="Delete">
-                    <IconButton onClick={handleDelete}>
-                        <DeleteIcon />
-                    </IconButton>
-                </Tooltip>
-            )}
-            {/* {numSelected > 0 ? (
-                <Tooltip title="Delete">
-                    <IconButton onClick={handleDelete}>
-                        <DeleteIcon />
-                    </IconButton>
-                </Tooltip>
-            ) : (
-                <Tooltip title="Filter list">
-                    <IconButton>
-                        <FilterListIcon />
-                    </IconButton>
-                </Tooltip>
-            )} */}
-        </Toolbar>
+        <>
+            <Toolbar
+                sx={[
+                    {
+                        pl: { sm: 2 },
+                        pr: { xs: 1, sm: 1 },
+                    },
+                    numSelected > 0 && {
+                        bgcolor: (theme) =>
+                            alpha(theme.palette.primary.main, theme.palette.action.activatedOpacity),
+                    },
+                ]}
+            >
+                {numSelected > 0 ? (
+                    <Typography
+                        sx={{ flex: '1 1 100%' }}
+                        color="inherit"
+                        variant="subtitle1"
+                        component="div"
+                    >
+                        {numSelected} selected
+                    </Typography>
+                ) : (
+                    <Typography
+                        sx={{ flex: '1 1 100%' }}
+                        variant="h6"
+                        id="tableTitle"
+                        component="div"
+                    >
+                        {title}
+                    </Typography>
+                )}
+                {numSelected > 0 && (
+                    <Tooltip title="Delete">
+                        <IconButton onClick={handleDeleteClick}>
+                            <DeleteIcon />
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Toolbar>
+            <ConfirmationModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                onConfirm={handleConfirmDelete}
+                title="Konfirmasi Penghapusan"
+                content="Apakah Anda yakin ingin menghapus PlayStation ini?"
+            />
+        </>
     );
 }
 
@@ -199,14 +189,6 @@ export default function TablePlaystations({ data, tableTitle, isLoading, isError
     const [page, setPage] = useState(0);
     const [dense, setDense] = useState(false);
     const [rowsPerPage, setRowsPerPage] = useState(5);
-
-    // if (isLoading) {
-    //     return <GradientCircularProgress />;
-    // }
-
-    // if (isError) {
-    //     return <Typography color="error">Error fetching data: {isError.message}</Typography>;
-    // }
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -307,12 +289,9 @@ export default function TablePlaystations({ data, tableTitle, isLoading, isError
                                         return (
                                             <TableRow
                                                 hover
-                                                // onClick={(event) => handleClick(event, row.ps_id)}
                                                 role="checkbox"
-                                                // aria-checked={isItemSelected}
                                                 tabIndex={-1}
                                                 key={row.ps_id}
-                                                // selected={isItemSelected}
                                                 sx={{ cursor: 'pointer' }}
                                             >
                                                 <TableCell padding="checkbox">

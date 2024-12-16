@@ -1,31 +1,17 @@
-import GradientCircularProgress from '@/components/Progress';
-import { useDeletePlaystation } from '@/hooks/playstation/usePlaystation';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import { alpha } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
-import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-import { visuallyHidden } from '@mui/utils';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useMemo } from 'react';
 import { toast } from "sonner";
-import dayjs from "dayjs";
+import {
+    Box, Button, Paper, Table, TableBody, TableCell,
+    TableContainer, TableHead, TablePagination, TableRow, TableSortLabel,
+    Typography
+} from '@mui/material';
+import { visuallyHidden } from '@mui/utils';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import GradientCircularProgress from '@/components/Progress';
 import ReusableModal from '@/components/Modal';
 import { useDoneRental } from '@/hooks/rentals/useRentals';
+import dayjs from "dayjs";
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -53,25 +39,25 @@ const headCells = [
     {
         id: 'ps_number',
         numeric: false,
-        disablePadding: true,
+        disablePadding: false,
         label: 'Nomor PS',
     },
     {
         id: 'branch_name',
         numeric: false,
-        disablePadding: true,
+        disablePadding: false,
         label: 'Nama Cabang',
     },
     {
         id: 'rental_type',
         numeric: false,
-        disablePadding: true,
+        disablePadding: false,
         label: 'Tipe Penyewaan',
     },
     {
         id: 'total_price',
-        numeric: false,
-        disablePadding: true,
+        numeric: true,
+        disablePadding: false,
         label: 'Harga',
     },
     {
@@ -89,8 +75,7 @@ const headCells = [
 ];
 
 function EnhancedTableHead(props) {
-    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
-        props;
+    const { order, orderBy, onRequestSort } = props;
     const createSortHandler = (property) => (event) => {
         onRequestSort(event, property);
     };
@@ -98,22 +83,11 @@ function EnhancedTableHead(props) {
     return (
         <TableHead>
             <TableRow>
-                <TableCell padding="checkbox">
-                    <Checkbox
-                        color="primary"
-                        indeterminate={numSelected > 0 && numSelected < rowCount}
-                        checked={rowCount > 0 && numSelected === rowCount}
-                        onChange={onSelectAllClick}
-                        inputProps={{
-                            'aria-label': 'select all desserts',
-                        }}
-                    />
-                </TableCell>
                 {headCells.map((headCell) => (
                     <TableCell
                         key={headCell.id}
                         align={headCell.numeric ? 'right' : 'left'}
-                        padding={headCell.disablePadding ? 'none' : 'normal'}
+                        padding={headCell.id === 'full_name' ? 'normal' : headCell.disablePadding ? 'none' : 'normal'}
                         sortDirection={orderBy === headCell.id ? order : false}
                     >
                         <TableSortLabel
@@ -132,78 +106,6 @@ function EnhancedTableHead(props) {
                 ))}
             </TableRow>
         </TableHead>
-    );
-}
-
-function EnhancedTableToolbar(props) {
-    const { numSelected, title, itemSelected } = props;
-
-    const deleteUser = useDeletePlaystation();
-    const handleDelete = () => {
-        const confirmDelete = window.confirm('Apakah Anda yakin ingin menghapus PlayStation ini?');
-        if (confirmDelete) {
-            console.log('Data yg dihapus ==> ', itemSelected)
-            itemSelected.forEach(rental_id => {
-                deleteUser.mutate(rental_id);
-            });
-        } else {
-            toast.info('Penghapusan dibatalkan');
-        }
-    };
-
-    return (
-        <Toolbar
-            sx={[
-                {
-                    pl: { sm: 2 },
-                    pr: { xs: 1, sm: 1 },
-                },
-                numSelected > 0 && {
-                    bgcolor: (theme) =>
-                        alpha(theme.palette.primary.main, theme.palette.action.activatedOpacity),
-                },
-            ]}
-        >
-            {numSelected > 0 ? (
-                <Typography
-                    sx={{ flex: '1 1 100%' }}
-                    color="inherit"
-                    variant="subtitle1"
-                    component="div"
-                >
-                    {numSelected} selected
-                </Typography>
-            ) : (
-                <Typography
-                    sx={{ flex: '1 1 100%' }}
-                    variant="h6"
-                    id="tableTitle"
-                    component="div"
-                >
-                    {title}
-                </Typography>
-            )}
-            {numSelected > 0 && (
-                <Tooltip title="Delete">
-                    <IconButton onClick={handleDelete}>
-                        <DeleteIcon />
-                    </IconButton>
-                </Tooltip>
-            )}
-            {/* {numSelected > 0 ? (
-                <Tooltip title="Delete">
-                    <IconButton onClick={handleDelete}>
-                        <DeleteIcon />
-                    </IconButton>
-                </Tooltip>
-            ) : (
-                <Tooltip title="Filter list">
-                    <IconButton>
-                        <FilterListIcon />
-                    </IconButton>
-                </Tooltip>
-            )} */}
-        </Toolbar>
     );
 }
 
@@ -229,30 +131,29 @@ const ModalDetail = ({ data }) => {
     )
 }
 
-export default function TableRentals({ data, tableTitle, isLoading, isError }) {
+export default function TableRentals({ data, tableTitle, isLoading, isError, rolePengguna }) {
     const router = useRouter();
     const [order, setOrder] = useState('asc');
     const [orderBy, setOrderBy] = useState('calories');
-    const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
-    const [dense, setDense] = useState(false);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalData, setModalData] = useState(null);
 
     const handleOpenModal = (data) => {
-        setModalData(data); // Simpan data ke state
-        setIsModalOpen(true); // Buka modal
+        setModalData(data);
+        setIsModalOpen(true);
     };
 
     const handleCloseModal = () => {
-        setIsModalOpen(false); // Tutup modal
-        setModalData(null); // Reset data modal saat ditutup
+        setIsModalOpen(false);
+        setModalData(null);
     };
 
     const doneRental = useDoneRental();
 
-    const handleDone = async (rentalId) => {
+    const handleDone = async (rentalId, event) => {
+        event.stopPropagation();
         try {
             await doneRental.mutateAsync({ rental_id: rentalId });
             toast.success("Data penyewaan berhasil diselesaikan");
@@ -261,47 +162,10 @@ export default function TableRentals({ data, tableTitle, isLoading, isError }) {
         }
     };
 
-
-    // if (isLoading) {
-    //     return <GradientCircularProgress />;
-    // }
-
-    // if (isError) {
-    //     return <Typography color="error">Error fetching data: {isError.message}</Typography>;
-    // }
-
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
         setOrderBy(property);
-    };
-
-    const handleSelectAllClick = (event) => {
-        if (event.target.checked) {
-            const newSelected = data.map((n) => n.rental_id);
-            setSelected(newSelected);
-            return;
-        }
-        setSelected([]);
-    };
-
-    const handleClick = (event, id) => {
-        const selectedIndex = selected.indexOf(id);
-        let newSelected = [];
-
-        if (selectedIndex === -1) {
-            newSelected = newSelected.concat(selected, id);
-        } else if (selectedIndex === 0) {
-            newSelected = newSelected.concat(selected.slice(1));
-        } else if (selectedIndex === selected.length - 1) {
-            newSelected = newSelected.concat(selected.slice(0, -1));
-        } else if (selectedIndex > 0) {
-            newSelected = newSelected.concat(
-                selected.slice(0, selectedIndex),
-                selected.slice(selectedIndex + 1),
-            );
-        }
-        setSelected(newSelected);
     };
 
     const handleChangePage = (event, newPage) => {
@@ -312,9 +176,6 @@ export default function TableRentals({ data, tableTitle, isLoading, isError }) {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
-
-    const emptyRows =
-        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
 
     const visibleRows = useMemo(
         () =>
@@ -327,7 +188,14 @@ export default function TableRentals({ data, tableTitle, isLoading, isError }) {
     return (
         <Box sx={{ width: '100%' }}>
             <Paper sx={{ width: '100%', mb: 2, minHeight: '40vh', borderRadius: '1rem', px: 2, py: 2 }}>
-                <EnhancedTableToolbar numSelected={selected.length} title={tableTitle} itemSelected={selected} />
+                <Typography
+                    sx={{ flex: '1 1 100%', mb: 2, ml: 2 }}
+                    variant="h6"
+                    id="tableTitle"
+                    component="div"
+                >
+                    {tableTitle}
+                </Typography>
                 {isLoading && (
                     <div className='w-full flex justify-center items-center mt-10'>
                         <GradientCircularProgress />
@@ -351,72 +219,43 @@ export default function TableRentals({ data, tableTitle, isLoading, isError }) {
                             <Table
                                 sx={{ minWidth: 750 }}
                                 aria-labelledby="tableTitle"
-                                size={dense ? 'small' : 'medium'}
+                                size='medium'
                             >
                                 <EnhancedTableHead
-                                    numSelected={selected.length}
                                     order={order}
                                     orderBy={orderBy}
-                                    onSelectAllClick={handleSelectAllClick}
                                     onRequestSort={handleRequestSort}
                                     rowCount={data.length}
                                 />
                                 <TableBody>
                                     {visibleRows.map((row, index) => {
-                                        const isItemSelected = selected.includes(row.rental_id);
-                                        const labelId = `enhanced-table-checkbox-${index}`;
-
                                         return (
                                             <TableRow
                                                 hover
                                                 onClick={() => handleOpenModal(row)}
                                                 role="checkbox"
-                                                // aria-checked={isItemSelected}
                                                 tabIndex={-1}
                                                 key={row.rental_id}
-                                                // selected={isItemSelected}
                                                 sx={{ cursor: 'pointer' }}
                                             >
-                                                <TableCell padding="checkbox">
-                                                    <Checkbox
-                                                        onClick={(event) => {
-                                                            event.stopPropagation(); // Mencegah propagasi event ke elemen parent
-                                                            handleClick(event, row.rental_id);
-                                                        }}
-                                                        color="primary"
-                                                        checked={isItemSelected}
-                                                        inputProps={{
-                                                            'aria-labelledby': labelId,
-                                                        }}
-                                                    />
-                                                </TableCell>
-                                                <TableCell
-                                                    component="th"
-                                                    id={labelId}
-                                                    scope="row"
-                                                    padding="none"
-                                                    align="left"
-                                                >
+                                                <TableCell component="th" scope="row" padding="normal">
                                                     {row.full_name || '-'}
                                                 </TableCell>
                                                 <TableCell align="left">{row.ps_number || '-'}</TableCell>
                                                 <TableCell align="left">{row.branch_name || '-'}</TableCell>
                                                 <TableCell align="left">{row.rental_type === 'on-site' ? 'Sewa Ditempat' : 'Sewa Dibawa Pulang' || '-'}</TableCell>
-                                                <TableCell align="left">
+                                                <TableCell align="right">
                                                     {row.total_price
                                                         ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(row.total_price)
                                                         : '-'}
                                                 </TableCell>
-
                                                 <TableCell align="left">{row.status === 'active' ? 'Aktif' : 'Selesai' || '-'}</TableCell>
                                                 <TableCell align="left">
                                                     <Button
                                                         variant="contained"
                                                         color="warning"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            handleDone(row.rental_id)
-                                                        }} // Kirim booking_id sebagai parameter
+                                                        onClick={(event) => handleDone(row.rental_id, event)}
+                                                        disabled={rolePengguna === 'admin' ? false : true}
                                                         startIcon={<CheckCircleIcon />}
                                                     >
                                                         Selesai
@@ -425,15 +264,6 @@ export default function TableRentals({ data, tableTitle, isLoading, isError }) {
                                             </TableRow>
                                         );
                                     })}
-                                    {emptyRows > 0 && (
-                                        <TableRow
-                                            style={{
-                                                height: (dense ? 33 : 53) * emptyRows,
-                                            }}
-                                        >
-                                            <TableCell colSpan={6} />
-                                        </TableRow>
-                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>
@@ -443,9 +273,9 @@ export default function TableRentals({ data, tableTitle, isLoading, isError }) {
                             count={data.length}
                             rowsPerPage={rowsPerPage}
                             page={page}
-                            labelRowsPerPage={"Jumlah Tampilan Data"}
                             onPageChange={handleChangePage}
                             onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelRowsPerPage={"Jumlah Tampilan Data"}
                         />
                         <ReusableModal
                             open={isModalOpen}

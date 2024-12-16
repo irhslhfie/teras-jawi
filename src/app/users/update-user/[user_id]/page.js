@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { TextField, Button, Box, Typography } from '@mui/material';
+import { TextField, Button, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import Layout from '@/components/layout';
 import { useCreateAdmin, useGetUserById, useUpdateUser } from '@/hooks/admin/useAdmin';
 import { useRouter, useParams } from "next/navigation";
 import AuthWrapper from '@/helpers/AuthWrapper';
+import { useGetBranchAll } from '@/hooks/branch/useBranches';
 
 const UpdateUser = () => {
     const router = useRouter();
@@ -19,6 +20,7 @@ const UpdateUser = () => {
         branch_id: ''
     });
     const [errors, setErrors] = useState({});
+    const { data: dataBranch, isLoading: loadingBranch } = useGetBranchAll();
     const { data: dataUser, isLoading, error, isSuccess: dataUserSukses } = useGetUserById({
         user_id: user_id
     });
@@ -44,7 +46,7 @@ const UpdateUser = () => {
                 email: dataUser?.email,
                 phone_number: dataUser?.phone_number,
                 role: dataUser?.role,
-                branch_id: dataUser?.branch_id
+                branch_id: dataUser?.branch_user
             });
         } else {
             console.log(error + "Data User error")
@@ -78,6 +80,7 @@ const UpdateUser = () => {
                 full_name: formData?.full_name,
                 email: formData?.email,
                 phone_number: formData?.phone_number,
+                branch_user: formData?.branch_id
             })
             router.back();
         } catch (error) {
@@ -115,9 +118,39 @@ const UpdateUser = () => {
                             ))}
                         </div>
 
-                        <Button variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
-                            Update User
-                        </Button>
+                        {/* Pilih Cabang */}
+                        <FormControl fullWidth sx={{ mt: 2 }}>
+                            <InputLabel id="branch-select-label">Pilih Cabang</InputLabel>
+                            <Select
+                                labelId="branch-select-label"
+                                id="branch-select"
+                                value={formData.branch_id}
+                                name="branch_id"
+                                label="Pilih Cabang"
+                                onChange={(e) => handleChange('branch_id', e.target.value)}
+                                error={!!errors.branch_id}
+                            >
+                                {dataBranch?.map((item, index) => (
+                                    <MenuItem value={item.branch_id}>{item.branch_name}</MenuItem>
+                                ))}
+                            </Select>
+                            {errors.branch_id && <Typography color="error" variant="caption">{errors.branch_id}</Typography>}
+                        </FormControl>
+
+                        <div className='flex justify-between mt-5'>
+                            <Button variant="contained" color="primary" type="submit" size="medium">
+                                Update User
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                size="medium"
+                                onClick={() => {
+                                    router.back();
+                                }}
+                            >
+                                Batal
+                            </Button>
+                        </div>
                     </form>
                 </Box>
             </Layout>

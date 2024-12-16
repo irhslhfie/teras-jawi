@@ -5,6 +5,7 @@ import Layout from '@/components/layout';
 import { useCreateAdmin } from '@/hooks/admin/useAdmin';
 import { useRouter } from "next/navigation";
 import AuthWrapper from '@/helpers/AuthWrapper';
+import { useGetBranchAll } from '@/hooks/branch/useBranches';
 
 const AddUser = () => {
     const router = useRouter();
@@ -15,15 +16,16 @@ const AddUser = () => {
         full_name: '',
         email: '',
         phone_number: '',
-        role: '', // Role ditambahkan disini
-        branch_id: '' // Untuk memilih cabang
+        role: 'admin',
+        branch_id: ''
     });
     const [errors, setErrors] = useState({});
+    const { data: dataBranch, isLoading: loadingBranch } = useGetBranchAll();
 
     // Fungsi Validasi
     const validateForm = () => {
         const newErrors = {};
-        const { username, password, confirmPassword, full_name, email, phone_number, role } = formData;
+        const { username, password, confirmPassword, full_name, email, phone_number, role, branch_id } = formData;
 
         if (!username) newErrors.username = 'Username wajib diisi.';
         if (!full_name) newErrors.full_name = 'Nama lengkap wajib diisi.';
@@ -37,7 +39,7 @@ const AddUser = () => {
         if (password !== confirmPassword) {
             newErrors.confirmPassword = 'Konfirmasi password tidak sesuai.';
         }
-        if (!role) newErrors.role = 'Role wajib dipilih.';
+        if (!branch_id) newErrors.branch_id = 'Cabang wajib dipilih.';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0; // Mengembalikan true jika tidak ada error
@@ -69,8 +71,8 @@ const AddUser = () => {
                 full_name: formData?.full_name,
                 email: formData?.email,
                 phone_number: formData?.phone_number,
-                role: formData?.role,
-                branch_id: formData?.branch_id // Pastikan kamu kirimkan branch_id juga jika diperlukan
+                role: 'admin',
+                branch_user: formData?.branch_id // Pastikan kamu kirimkan branch_id juga jika diperlukan
             });
             router.back(); // Atau rute lain setelah sukses
         } catch (error) {
@@ -83,7 +85,7 @@ const AddUser = () => {
             <Layout>
                 <Box sx={{ maxWidth: '100%', mx: 'auto', mt: 5, backgroundColor: '#ffffff', py: 3, px: 4, borderRadius: '12px' }}>
                     <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                        Tambah Data User
+                        Tambah Data User Admin
                     </Typography>
                     <form onSubmit={handleSubmit}>
                         <div className="space-y-4">
@@ -93,7 +95,8 @@ const AddUser = () => {
                                 email: 'Email',
                                 phone_number: 'Phone Number',
                                 password: 'Password',
-                                confirmPassword: 'Confirm Password'
+                                confirmPassword: 'Confirm Password',
+                                role: 'Role'
                             }).map(([key, label]) => (
                                 <TextField
                                     key={key}
@@ -102,38 +105,46 @@ const AddUser = () => {
                                     type={key.includes('password') || key.includes('confirmPassword') ? 'password' : 'text'}
                                     value={formData[key]}
                                     onChange={(e) => handleChange(key, e.target.value)}
-                                    error={!!errors[key]} // Set error state
-                                    helperText={errors[key]} // Display error message
-                                // sx={{
-                                //     '& .MuiOutlinedInput-root': {
-                                //         backgroundColor: '#F3F4F6',
-                                //     }
-                                // }}
+                                    error={!!errors[key]}
+                                    helperText={errors[key]}
+                                    disabled={key.includes('role') ? true : false}
                                 />
                             ))}
                         </div>
 
-                        {/* Pilih Role */}
+                        {/* Pilih Cabang */}
                         <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel id="role-select-label">Pilih Role</InputLabel>
+                            <InputLabel id="branch-select-label">Pilih Cabang</InputLabel>
                             <Select
-                                labelId="role-select-label"
-                                id="role-select"
-                                value={formData.role}
-                                name="role"
-                                label="Pilih Role"
-                                onChange={(e) => handleChange('role', e.target.value)}
-                                error={!!errors.role} // Set error state
+                                labelId="branch-select-label"
+                                id="branch-select"
+                                value={formData.branch_id}
+                                name="branch_id"
+                                label="Pilih Cabang"
+                                onChange={(e) => handleChange('branch_id', e.target.value)}
+                                error={!!errors.branch_id}
                             >
-                                <MenuItem value="admin">Admin</MenuItem>
-                                <MenuItem value="owner">Pemilik</MenuItem>
+                                {dataBranch?.map((item, index) => (
+                                    <MenuItem value={item.branch_id}>{item.branch_name}</MenuItem>
+                                ))}
                             </Select>
-                            {errors.role && <Typography color="error" variant="caption">{errors.role}</Typography>}
+                            {errors.branch_id && <Typography color="error" variant="caption">{errors.branch_id}</Typography>}
                         </FormControl>
 
-                        <Button variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
-                            Tambah User
-                        </Button>
+                        <div className='flex justify-between mt-5'>
+                            <Button variant="contained" color="primary" type="submit" size="medium">
+                                Tambah User
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                size="medium"
+                                onClick={() => {
+                                    router.back();
+                                }}
+                            >
+                                Batal
+                            </Button>
+                        </div>
                     </form>
                 </Box>
             </Layout>

@@ -23,6 +23,7 @@ import { useDeleteUser } from '@/hooks/admin/useAdmin';
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import GradientCircularProgress from '@/components/Progress';
+import { useGetBranchAll, useGetBranchById } from '@/hooks/branch/useBranches';
 
 function descendingComparator(a, b, orderBy) {
     if (b[orderBy] < a[orderBy]) {
@@ -206,6 +207,7 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
     const [page, setPage] = React.useState(0);
     const [dense, setDense] = React.useState(false);
     const [rowsPerPage, setRowsPerPage] = React.useState(5);
+    // const { data: dataBranch, isLoading: loadingBranch } = useGetBranchById();
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -345,7 +347,7 @@ export default function TableUsers({ data, tableTitle, isError, isLoading, role 
                                                 <TableCell align="left">{row.phone_number}</TableCell>
                                                 <TableCell align="left">{row.role === 'owner' ? 'Pemilik' : row.role === 'member' ? 'Member' : 'Admin'}</TableCell>
                                                 <TableCell align="left">
-                                                    <Button variant="contained" onClick={() => router.push(`/users/update-user/${row.user_id}`)}>Edit</Button>
+                                                    <Button disabled={row.role === 'admin' ? false : true} variant="contained" onClick={() => router.push(`/users/update-user/${row.user_id}`)}>Edit</Button>
                                                 </TableCell>
                                             </TableRow>
                                         );

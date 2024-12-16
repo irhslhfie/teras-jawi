@@ -21,7 +21,7 @@ export const menuItems = [
             { text: 'Histori Penyewaan', path: '/rentals/history', roles: ['admin', 'owner'] }
         ]
     },
-    { text: 'Users', icon: <ManageAccountsIcon />, path: '/users', roles: ['admin', 'owner'] },
+    { text: 'Users', icon: <ManageAccountsIcon />, path: '/users', roles: ['owner'] },
 ];
 
 

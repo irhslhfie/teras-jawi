@@ -18,8 +18,7 @@ const MenuProps = {
     },
 };
 
-// 1. MultipleSelectChip (Default Export)
-export default function MultipleSelectChip({ title, names = [], personName, setPersonName, multiple = false }) {
+export default function MultipleSelectChipBranch({ title, names = [], personName, setPersonName, multiple = false }) {
     const theme = useTheme();
 
     const handleChange = (event) => {
@@ -49,10 +48,11 @@ export default function MultipleSelectChip({ title, names = [], personName, setP
                 renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                         {multiple
-                            ? selected.map((value) => (
-                                <Chip key={value} label={value} sx={{ backgroundColor: '#1565c0', color: '#ffffff' }} />
-                            ))
-                            : <Chip label={selected} sx={{ backgroundColor: '#1565c0', color: '#ffffff' }} />}
+                            ? selected.map((value) => {
+                                const selectedLabel = names.find((name) => name.value === value)?.label || value;
+                                return <Chip key={value} label={selectedLabel} sx={{ backgroundColor: '#1565c0', color: '#ffffff' }} />;
+                            })
+                            : <Chip label={names.find((name) => name.value === selected)?.label || selected} sx={{ backgroundColor: '#1565c0', color: '#ffffff' }} />}
                     </Box>
                 )}
                 MenuProps={MenuProps}
@@ -60,10 +60,10 @@ export default function MultipleSelectChip({ title, names = [], personName, setP
                 {names?.map((name, index) => (
                     <MenuItem
                         key={index}
-                        value={name}
+                        value={name.value}
                         style={{
-                            backgroundColor: personName?.includes(name) ? '#1565c0' : 'inherit',
-                            color: personName?.includes(name) ? '#ffffff' : 'inherit',
+                            backgroundColor: personName?.includes(name.value) ? '#1565c0' : 'inherit',
+                            color: personName?.includes(name.value) ? '#ffffff' : 'inherit',
                         }}
                         sx={{
                             '&.Mui-selected': {
@@ -73,7 +73,7 @@ export default function MultipleSelectChip({ title, names = [], personName, setP
                             },
                         }}
                     >
-                        {name}
+                        {name.label}
                     </MenuItem>
                 ))}
             </Select>

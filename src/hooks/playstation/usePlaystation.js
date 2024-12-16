@@ -3,30 +3,34 @@ import { api } from "@/helpers";
 import { toast } from "sonner";
 
 export const useGetPlaystationAll = (props) => {
-    const { ps_type, branch_name } = props;
+    const { ps_type, branch_name, branch_id } = props; // Tambahkan branch_id dari props
     const { data, isSuccess, isLoading, error, refetch } = useQuery({
-        queryKey: ["playstation-all"],
+        queryKey: ["playstation-all", { ps_type, branch_name, branch_id }], // Tambahkan dependency untuk queryKey
         queryFn: async () => {
             let queryParams = '';
 
             if (ps_type) {
-                queryParams += `?ps_type=${ps_type}`;
+                queryParams += `?ps_type=${encodeURIComponent(ps_type)}`;
             }
 
             if (branch_name) {
-                queryParams += queryParams ? `&branch_name=${branch_name}` : `?branch_name=${branch_name}`;
+                queryParams += queryParams ? `&branch_name=${encodeURIComponent(branch_name)}` : `?branch_name=${encodeURIComponent(branch_name)}`;
+            }
+
+            if (branch_id && branch_id !== null) {
+                queryParams += queryParams ? `&branch_id=${encodeURIComponent(branch_id)}` : `?branch_id=${encodeURIComponent(branch_id)}`;
             }
 
             const response = await api.get(`/playstation${queryParams}`);
             const data = response.data;
-            console.log('cek data playstation----', data)
+            console.log('cek data playstation----', data);
             return data;
         },
         onSuccess: (data) => {
             console.log('Get Data playstation Sukses ----', data);
         },
         onError: (error) => {
-            toast.error(error.response.data.response.message);
+            toast.error(error.response?.data?.message || 'Terjadi kesalahan');
             console.log('Error Get Data');
             console.log(error);
         },
