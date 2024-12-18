@@ -21,6 +21,7 @@ export default function ForgotPassword() {
 
     const handleSend = (e) => {
         e.preventDefault();
+        if (!newPassword) return toast.warning('Silahkan isi password terlebih dahulu!')
         if (newPassword !== confirmPassword) {
             return toast.warning('Password dan Konfirmasi Password anda tidak sama!');
         }

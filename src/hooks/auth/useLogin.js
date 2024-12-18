@@ -90,7 +90,7 @@ export const useForgotPassword = () => {
       console.log('Send Forgot Password Sukses');
     },
     onError: (error) => {
-      toast.error('Gagal Kirim Tautan');
+      toast.error(error.response.data);
       console.log('Gagal Kirim Tautan : ', error);
     },
   });
@@ -111,7 +111,7 @@ export const useResetPassword = () => {
       console.log('Reset Password Sukses');
     },
     onError: (error) => {
-      toast.error('Gagal Reset Password');
+      toast.error(error.response.data);
       console.log('Gagal Reset Password : ', error);
     },
   });

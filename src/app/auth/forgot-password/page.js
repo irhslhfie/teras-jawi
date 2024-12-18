@@ -14,6 +14,8 @@ export default function ForgotPassword() {
 
     const handleSend = (e) => {
         e.preventDefault();
+        if (!username) return toast.warning('Silahkan isi username anda terlebih dahulu!')
+
         mutate(username);
     };
 

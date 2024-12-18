@@ -84,6 +84,7 @@ export const useDoneRental = () => {
 
     const mutation = useMutation({
         mutationFn: async ({ rental_id, ps_id }) => {
+            console.log(rental_id, '---', ps_id)
             const response = await api.put(`/rentals/done`, { rental_id, ps_id });
             return response.data;
         },
