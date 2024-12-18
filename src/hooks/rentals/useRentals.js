@@ -83,8 +83,8 @@ export const useDoneRental = () => {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async ({ rental_id }) => {
-            const response = await api.put(`/rentals/done`, { rental_id });
+        mutationFn: async ({ rental_id, ps_id }) => {
+            const response = await api.put(`/rentals/done`, { rental_id, ps_id });
             return response.data;
         },
         onSuccess: (data) => {

@@ -152,10 +152,10 @@ export default function TableRentals({ data, tableTitle, isLoading, isError, rol
 
     const doneRental = useDoneRental();
 
-    const handleDone = async (rentalId, event) => {
+    const handleDone = async (rentalId, psId, event) => {
         event.stopPropagation();
         try {
-            await doneRental.mutateAsync({ rental_id: rentalId });
+            await doneRental.mutateAsync({ rental_id: rentalId, ps_id: psId });
             toast.success("Data penyewaan berhasil diselesaikan");
         } catch (error) {
             toast.error("Gagal menyelesaikan data penyewaan");
@@ -254,7 +254,7 @@ export default function TableRentals({ data, tableTitle, isLoading, isError, rol
                                                     <Button
                                                         variant="contained"
                                                         color="warning"
-                                                        onClick={(event) => handleDone(row.rental_id, event)}
+                                                        onClick={(event) => handleDone(row.rental_id, row.ps_id, event)}
                                                         disabled={rolePengguna === 'admin' ? false : true}
                                                         startIcon={<CheckCircleIcon />}
                                                     >
