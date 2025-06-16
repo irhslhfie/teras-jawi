@@ -31,119 +31,143 @@ const headCells = [
   { id: "property_name", label: "Properti" },
   { id: "payment_method", label: "Metode Bayar" },
   { id: "total_price", label: "Harga" },
+  { id: "status", label: "Status" },
   { id: "action", label: "Aksi" },
 ];
 
-// Komponen Modal yang akan menampilkan detail
-const DetailModal = ({ purchase, apiBaseUrl, onClose }) => {
-  if (!purchase) return null;
+const DetailModal = React.forwardRef(
+  ({ purchase, apiBaseUrl, onClose }, ref) => {
+    if (!purchase) return null;
 
-  return (
-    <Box
-      sx={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: { xs: "90%", md: 800 },
-        bgcolor: "background.paper",
-        boxShadow: 24,
-        p: 4,
-        borderRadius: 2,
-        maxHeight: "90vh",
-        overflowY: "auto",
-      }}
-    >
-      <Typography variant="h5" gutterBottom>
-        Detail Pengajuan Pembelian
-      </Typography>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} md={6}>
-          <Typography>
-            <strong>Nama:</strong> {purchase.full_name}
-          </Typography>
-          <Typography>
-            <strong>Email:</strong> {purchase.email}
-          </Typography>
-          <Typography>
-            <strong>Telepon:</strong> {purchase.phone_number}
-          </Typography>
+    const renderImage = (imagePath, altText) => {
+      // 1. Pengecekan yang lebih ketat: pastikan imagePath adalah string yang tidak kosong.
+      if (
+        !imagePath ||
+        typeof imagePath !== "string" ||
+        imagePath.trim() === ""
+      ) {
+        return <Typography color="text.secondary">(Belum diunggah)</Typography>;
+      }
+
+      // 2. Pengecekan untuk apiBaseUrl
+      if (!apiBaseUrl) {
+        console.error(
+          "Error: NEXT_PUBLIC_API_URI is not defined. Cannot construct image URL."
+        );
+        return (
+          <Typography color="error">(Konfigurasi URL API salah)</Typography>
+        );
+      }
+
+      const sanitizedPath = imagePath.replace(/\\/g, "/");
+      const finalUrl = `${apiBaseUrl}${sanitizedPath}`;
+
+      // 3. Log untuk debugging URL yang akan dirender
+      console.log(`Rendering image for ${altText}: ${finalUrl}`);
+
+      try {
+        // 4. Validasi URL sebelum merender untuk mencegah crash
+        new URL(finalUrl);
+      } catch (error) {
+        console.error(`Invalid URL constructed for ${altText}:`, finalUrl);
+        return <Typography color="error">(URL Gambar tidak valid)</Typography>;
+      }
+
+      return (
+        <Image
+          src={finalUrl}
+          alt={altText}
+          width={200}
+          height={120}
+          style={{ objectFit: "contain", border: "1px solid #ddd" }}
+          unoptimized
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+            const errorText = e.currentTarget.nextSibling;
+            if (errorText) errorText.style.display = "block";
+          }}
+        />
+      );
+    };
+
+    return (
+      <Box
+        ref={ref}
+        tabIndex={-1}
+        sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: { xs: "90%", md: 800 },
+          bgcolor: "background.paper",
+          boxShadow: 24,
+          p: 4,
+          borderRadius: 2,
+          maxHeight: "90vh",
+          overflowY: "auto",
+        }}
+      >
+        <Typography variant="h5" gutterBottom>
+          Detail Pengajuan Pembelian
+        </Typography>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={12} md={6}>
+            <Typography>
+              <strong>Nama:</strong> {purchase.full_name}
+            </Typography>
+            <Typography>
+              <strong>Email:</strong> {purchase.email}
+            </Typography>
+            <Typography>
+              <strong>Telepon:</strong> {purchase.phone_number}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography>
+              <strong>Properti:</strong> {purchase.property_name} (
+              {purchase.type_name})
+            </Typography>
+            <Typography>
+              <strong>Metode Bayar:</strong> {purchase.payment_method}
+            </Typography>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography>
-            <strong>Properti:</strong> {purchase.property_name} (
-            {purchase.type_name})
-          </Typography>
-          <Typography>
-            <strong>Metode Bayar:</strong> {purchase.payment_method}
-          </Typography>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h6" gutterBottom>
+          Dokumen Pendukung
+        </Typography>
+        <Grid container spacing={1} sx={{ textAlign: "center" }}>
+          <Grid item xs={12} md={4}>
+            <Typography variant="subtitle2" fontWeight="bold">
+              KTP
+            </Typography>
+            {renderImage(purchase.image_ktp, "KTP")}
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="subtitle2" fontWeight="bold">
+              Kartu Keluarga
+            </Typography>
+            {renderImage(purchase.image_kk, "KK")}
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="subtitle2" fontWeight="bold">
+              NPWP
+            </Typography>
+            {renderImage(purchase.image_npwp, "NPWP")}
+          </Grid>
         </Grid>
-      </Grid>
-      <Divider sx={{ my: 2 }} />
-      <Typography variant="h6" gutterBottom>
-        Dokumen Pendukung
-      </Typography>
-      <Grid container spacing={1} sx={{ textAlign: "center" }}>
-        <Grid item xs={12} md={4}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            KTP
-          </Typography>
-          {purchase.image_ktp ? (
-            <Image
-              src={`${apiBaseUrl}${purchase.image_ktp}`}
-              alt="KTP"
-              width={200}
-              height={120}
-              style={{ objectFit: "contain", border: "1px solid #ddd" }}
-              unoptimized
-            />
-          ) : (
-            <Typography color="text.secondary">(Belum diupload)</Typography>
-          )}
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            Kartu Keluarga
-          </Typography>
-          {purchase.image_kk ? (
-            <Image
-              src={`${apiBaseUrl}${purchase.image_kk}`}
-              alt="KK"
-              width={200}
-              height={120}
-              style={{ objectFit: "contain", border: "1px solid #ddd" }}
-              unoptimized
-            />
-          ) : (
-            <Typography color="text.secondary">(Belum diupload)</Typography>
-          )}
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Typography variant="subtitle2" fontWeight="bold">
-            NPWP
-          </Typography>
-          {purchase.image_npwp ? (
-            <Image
-              src={`${apiBaseUrl}${purchase.image_npwp}`}
-              alt="NPWP"
-              width={200}
-              height={120}
-              style={{ objectFit: "contain", border: "1px solid #ddd" }}
-              unoptimized
-            />
-          ) : (
-            <Typography color="text.secondary">(Belum diupload)</Typography>
-          )}
-        </Grid>
-      </Grid>
-      <Box sx={{ mt: 3, textAlign: "right" }}>
-        <Button onClick={onClose} variant="outlined">
-          Tutup
-        </Button>
+        <Box sx={{ mt: 3, textAlign: "right" }}>
+          <Button onClick={onClose} variant="outlined">
+            Tutup
+          </Button>
+        </Box>
       </Box>
-    </Box>
-  );
-};
+    );
+  }
+);
+
+DetailModal.displayName = "DetailModal";
 
 export default function TablePurchases({
   data,
@@ -184,7 +208,9 @@ export default function TablePurchases({
     );
   }, [page, rowsPerPage, data]);
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URI.replace("/api/v1", "");
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URI
+    ? process.env.NEXT_PUBLIC_API_URI.replace("/api/v1", "")
+    : "";
 
   return (
     <Box sx={{ width: "100%" }}>

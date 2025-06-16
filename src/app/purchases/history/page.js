@@ -5,7 +5,7 @@ import Layout from "@/components/layout";
 import AuthWrapper from "@/helpers/AuthWrapper";
 import Box from "@mui/material/Box";
 import { useGetPurchaseHistory } from "@/hooks/purchases/usePurchases";
-import TablePurchases from "../components/TablePurchases";
+import TablePurchases from "../components/TablePurchases"; // Tabel yang sama digunakan
 import { TextField, Button } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -21,39 +21,48 @@ export default function PurchaseHistory() {
   const {
     data: dataPurchases,
     isLoading,
-    isSuccess,
+    isError,
     error,
     refetch,
-  } = useGetPurchaseHistory(startDate, endDate, propertyType);
+  } = useGetPurchaseHistory(
+    startDate ? startDate.format("YYYY-MM-DD") : null,
+    endDate ? endDate.format("YYYY-MM-DD") : null,
+    propertyType
+  );
 
   const handleFilter = () => {
     refetch();
   };
 
   const handleGeneratePDF = () => {
+    if (!dataPurchases || dataPurchases.length === 0) {
+      alert("Tidak ada data untuk dicetak.");
+      return;
+    }
+
     const doc = new jsPDF();
-    doc.text("Purchase History Report", 14, 15);
+    doc.text("Laporan Histori Pembelian", 14, 15);
 
     const tableColumn = [
-      "Username",
-      "Email",
-      "Property Type",
-      "Property Name",
-      "Total Price",
+      "Nama Pembeli",
+      "Properti",
+      "Tipe",
+      "Metode Bayar",
+      "Harga",
       "Status",
-      "Date",
+      "Tanggal",
     ];
     const tableRows = dataPurchases.map((purchase) => [
-      purchase.username,
-      purchase.email,
-      purchase.type_name,
+      purchase.full_name,
       purchase.property_name,
+      purchase.type_name,
+      purchase.payment_method,
       new Intl.NumberFormat("id-ID", {
         style: "currency",
         currency: "IDR",
       }).format(purchase.total_price),
       purchase.status,
-      new Date(purchase.created_at).toLocaleDateString(),
+      new Date(purchase.created_at).toLocaleDateString("id-ID"),
     ]);
 
     doc.autoTable({
@@ -62,7 +71,7 @@ export default function PurchaseHistory() {
       startY: 20,
     });
 
-    doc.save("purchase_history.pdf");
+    doc.save("histori_pembelian.pdf");
   };
 
   return (
@@ -81,39 +90,45 @@ export default function PurchaseHistory() {
             <h1>Histori Pembelian</h1>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2, mb: 2, px: 2 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2, px: 2 }}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                label="Start Date"
+                label="Tanggal Mulai"
                 value={startDate}
                 onChange={(newValue) => setStartDate(newValue)}
                 renderInput={(params) => <TextField {...params} />}
               />
               <DatePicker
-                label="End Date"
+                label="Tanggal Akhir"
                 value={endDate}
                 onChange={(newValue) => setEndDate(newValue)}
                 renderInput={(params) => <TextField {...params} />}
               />
             </LocalizationProvider>
             <TextField
-              label="Property Type"
+              label="Tipe Properti"
               value={propertyType}
               onChange={(e) => setPropertyType(e.target.value)}
             />
             <Button variant="contained" onClick={handleFilter}>
               Filter
             </Button>
-            <Button variant="contained" onClick={handleGeneratePDF}>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleGeneratePDF}
+            >
               Generate PDF
             </Button>
           </Box>
 
           <TablePurchases
-            data={dataPurchases}
+            data={dataPurchases || []}
             tableTitle={"Tabel Histori Pembelian"}
             isLoading={isLoading}
-            isError={error}
+            isError={isError}
+            error={error}
+            isHistory={true} // <-- TAMBAHKAN PROP INI
           />
         </div>
       </Layout>

@@ -3,9 +3,9 @@ import { api } from "@/helpers";
 import { toast } from "sonner";
 
 export const useGetPropertyAll = (props) => {
-  const { property_name, type_name, type_id } = props; // Tambahkan type_id dari props
+  const { property_name, type_name, type_id } = props;
   const { data, isSuccess, isLoading, error, refetch } = useQuery({
-    queryKey: ["property-all", { property_name, type_name, type_id }], // Tambahkan dependency untuk queryKey
+    queryKey: ["property-all", { property_name, type_name, type_id }],
     queryFn: async () => {
       let queryParams = "";
 
@@ -82,8 +82,12 @@ export const useCreateProperty = () => {
       formData.append("price", newProperty.price);
       formData.append("sq_meter", newProperty.sq_meter);
       formData.append("description", newProperty.description);
-      if (newProperty.image) {
-        formData.append("image", newProperty.image); // 'image' adalah nama field untuk file
+
+      // Mengubah cara append gambar
+      if (newProperty.images && newProperty.images.length > 0) {
+        newProperty.images.forEach((file) => {
+          formData.append("images", file);
+        });
       }
 
       const response = await api.post("/property", formData, {
