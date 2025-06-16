@@ -1,6 +1,42 @@
-import React from "react";
+"use client";
+import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/helpers";
+import { Box, CircularProgress, Typography } from "@mui/material";
+
+// --- DATA KAVLING BERDASARKAN DENAH ASLI ANDA ---
+// 'id' di sini sekarang SAMA PERSIS dengan 'property_name' di database Anda.
+const kavlingLayout = [
+  // Kolom 1 (paling kiri)
+  { id: "Rumah 18", x: 140, y: 100 },
+  { id: "Rumah 19", x: 140, y: 160 },
+  { id: "Rumah 20", x: 140, y: 220 },
+  { id: "Rumah 21", x: 140, y: 280 },
+  { id: "Rumah 22", x: 140, y: 340 },
+  { id: "Rumah 24", x: 140, y: 400 },
+  { id: "Rumah 25", x: 140, y: 460 },
+  // Kolom 2
+  { id: "Rumah 17", x: 240, y: 100 },
+  { id: "Rumah 16", x: 240, y: 160 },
+  { id: "Rumah 15", x: 240, y: 220 },
+  { id: "Rumah 14", x: 240, y: 280 },
+  { id: "Rumah 23", x: 240, y: 340 },
+  // Kolom 3
+  { id: "Rumah 10", x: 340, y: 100 },
+  { id: "Rumah 11", x: 340, y: 160 },
+  { id: "Rumah 12", x: 340, y: 220 },
+  { id: "Rumah 13", x: 340, y: 280 },
+  // Kolom 4
+  { id: "Rumah 9", x: 440, y: 100 },
+  { id: "Rumah 8", x: 440, y: 160 },
+  { id: "Rumah 7", x: 440, y: 220 },
+  { id: "Rumah 6", x: 440, y: 280 },
+  { id: "Rumah 5", x: 440, y: 340 },
+  // Kolom 5
+  { id: "Rumah 1", x: 600, y: 100 },
+  { id: "Rumah 2", x: 600, y: 160 },
+  { id: "Rumah 3", x: 600, y: 220 },
+];
 
 const PropertyMap = ({ onPropertyClick }) => {
   const {
@@ -15,445 +51,186 @@ const PropertyMap = ({ onPropertyClick }) => {
     },
   });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading properties</div>;
+  const propertyMap = useMemo(() => {
+    if (!properties) return new Map();
+    return new Map(properties.map((p) => [p.property_name, p]));
+  }, [properties]);
 
-  const getPropertyColor = (typeName) => {
-    switch (typeName) {
-      case "50":
-        return "#FF9B50";
-      case "60":
-        return "#87CEEB";
-      case "80":
-        return "#FFFF00";
-      default:
-        return "#CCCCCC";
-    }
-  };
-
-  const renderProperties = () => {
-    const type50 = properties.filter((p) => p.type_name === "50");
-    const type60 = properties.filter((p) => p.type_name === "60");
-    const type80 = properties.filter((p) => p.type_name === "80");
-
+  if (isLoading) {
     return (
-      <>
-        {/* Type 50 Properties */}
-        {type50.slice(0, 6).map((property, index) => (
-          <rect
-            key={property.property_id}
-            x="60"
-            y={50 + index * 60}
-            width="70"
-            height="50"
-            fill="#FF9B50"
-            stroke="black"
-            onClick={() => onPropertyClick(property)}
-            style={{ cursor: "pointer" }}
-          />
-        ))}
-        {type50.slice(6, 12).map((property, index) => (
-          <rect
-            key={property.property_id}
-            x="140"
-            y={50 + index * 60}
-            width="70"
-            height="50"
-            fill="#FF9B50"
-            stroke="black"
-            onClick={() => onPropertyClick(property)}
-            style={{ cursor: "pointer" }}
-          />
-        ))}
-
-        {/* Type 60 Properties */}
-        {type60.slice(0, 5).map((property, index) => (
-          <rect
-            key={property.property_id}
-            x="220"
-            y={50 + index * 60}
-            width="70"
-            height="50"
-            fill="#87CEEB"
-            stroke="black"
-            onClick={() => onPropertyClick(property)}
-            style={{ cursor: "pointer" }}
-          />
-        ))}
-        {type60.slice(5, 10).map((property, index) => (
-          <rect
-            key={property.property_id}
-            x="300"
-            y={50 + index * 60}
-            width="70"
-            height="50"
-            fill="#87CEEB"
-            stroke="black"
-            onClick={() => onPropertyClick(property)}
-            style={{ cursor: "pointer" }}
-          />
-        ))}
-
-        {/* Type 80 Properties */}
-        {type80.slice(0, 3).map((property, index) => (
-          <rect
-            key={property.property_id}
-            x="380"
-            y={50 + index * 60}
-            width="70"
-            height="50"
-            fill="#FFFF00"
-            stroke="black"
-            onClick={() => onPropertyClick(property)}
-            style={{ cursor: "pointer" }}
-          />
-        ))}
-      </>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="500px"
+      >
+        <CircularProgress /> <Typography ml={2}>Memuat Denah...</Typography>
+      </Box>
     );
-  };
+  }
+
+  if (error)
+    return <Typography color="error">Gagal memuat denah properti.</Typography>;
 
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 800 600"
-      style={{
-        maxWidth: "100%",
-        height: "auto",
-        border: "1px solid black",
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: "1100px",
+        mx: "auto",
+        border: "1px solid #ccc",
+        borderRadius: 2,
+        p: { xs: 1, md: 2 },
+        bgcolor: "#f5f5f5",
       }}
     >
-      {/* Background with green area */}
-      <rect width="800" height="600" fill="#90EE90" />
-
-      {/* Main property area background */}
-      <rect
-        x="40"
-        y="40"
-        width="420"
-        height="420"
-        fill="#f0f0f0"
-        stroke="black"
-      />
-
-      {/* Trees/Green circles */}
-      {[50, 100, 150, 200, 250, 300].map((cy) => (
-        <circle key={`tree-left-${cy}`} cx="30" cy={cy} r="10" fill="#228B22" />
-      ))}
-      {[50, 100, 150, 200, 250].map((cy) => (
-        <circle
-          key={`tree-right-${cy}`}
-          cx="480"
-          cy={cy}
-          r="10"
-          fill="#228B22"
+      <style>{`.lot-g:hover > rect { filter: brightness(1.15); transform: scale(1.02); }`}</style>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 950 650"
+        style={{ width: "100%", height: "auto" }}
+      >
+        {/* Latar Belakang & Jalan */}
+        <rect width="100%" height="100%" fill="#1a512e" />
+        <path
+          d="M 120 80 L 700 80 L 700 550 L 580 550 L 580 400 L 420 400 L 420 80 Z"
+          fill="#616161"
         />
-      ))}
-      {[100, 150, 200, 250, 300].map((cx) => (
-        <circle
-          key={`tree-bottom-${cx}`}
-          cx={cx}
-          cy="480"
-          r="10"
-          fill="#228B22"
+
+        {/* Dekorasi Pohon */}
+        {[...Array(8)].map((_, i) => (
+          <circle
+            key={`tree-l-${i}`}
+            cx="100"
+            cy={125 + i * 60}
+            r="10"
+            fill="#003300"
+          />
+        ))}
+        {[...Array(5)].map((_, i) => (
+          <circle
+            key={`tree-r-${i}`}
+            cx="560"
+            cy={125 + i * 60}
+            r="10"
+            fill="#003300"
+          />
+        ))}
+        <circle cx="720" cy="125" r="10" fill="#003300" />
+        <circle cx="720" cy="185" r="10" fill="#003300" />
+
+        {/* Render Kavling */}
+        {kavlingLayout.map(({ id, x, y }) => {
+          const property = propertyMap.get(id); // Mencocokkan berdasarkan nama
+          const kavlingWidth = 80;
+          const kavlingHeight = 50;
+
+          let fillColor = "#bdbdbd";
+          let strokeColor = "#757575";
+          let isClickable = false;
+          let tooltip = `Kavling ${id} (Data tidak ditemukan)`;
+
+          if (property) {
+            isClickable = property.status !== "Terjual";
+            tooltip = `${property.property_name} (${property.type_name}) - ${property.status}`;
+            if (property.type_name.includes("50")) fillColor = "#ff9800";
+            if (property.type_name.includes("60")) fillColor = "#2196f3";
+            if (property.type_name.includes("80")) fillColor = "#ffeb3b";
+            strokeColor = property.status === "Terjual" ? "red" : "black";
+          }
+
+          return (
+            <g
+              key={id}
+              className="lot-g"
+              onClick={() => isClickable && onPropertyClick(property)}
+              style={{ cursor: isClickable ? "pointer" : "not-allowed" }}
+            >
+              <title>{tooltip}</title>
+              <rect
+                x={x}
+                y={y}
+                width={kavlingWidth}
+                height={kavlingHeight}
+                fill={fillColor}
+                stroke={strokeColor}
+                strokeWidth="2"
+                rx="4"
+                style={{
+                  opacity: isClickable ? 1 : 0.6,
+                  transition: "filter 0.2s, transform 0.2s",
+                }}
+              />
+              <text
+                x={x + kavlingWidth / 2}
+                y={y + kavlingHeight / 2 + 5}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="bold"
+                fill="#000"
+              >
+                {id}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Kompas & Legenda */}
+        <path
+          d="M 780 300 L 800 320 L 780 340 L 760 320 Z"
+          fill="white"
+          stroke="black"
         />
-      ))}
-
-      {/* Render properties */}
-      {renderProperties()}
-
-      {/* <!-- Type 50 Properties (Orange) - 12 units --> */}
-      <a href="#type50-1">
+        <text x="776" y="295" fontWeight="bold">
+          U
+        </text>
+        <text x="805" y="325" fontWeight="bold">
+          T
+        </text>
+        <text x="776" y="355" fontWeight="bold">
+          S
+        </text>
+        <text x="750" y="325" fontWeight="bold">
+          B
+        </text>
         <rect
-          x="60"
+          x="750"
           y="50"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
+          width="180"
+          height="155"
+          fill="rgba(255,255,255,0.9)"
+          rx="5"
         />
-      </a>
-      <a href="#type50-2">
+        <text x="760" y="70" fontWeight="bold" fontSize="16">
+          Keterangan Warna
+        </text>
+        <rect x="760" y="90" width="20" height="20" fill="#ffeb3b" rx="4" />
+        <text x="785" y="105">
+          Tipe 80
+        </text>
+        <rect x="760" y="120" width="20" height="20" fill="#2196f3" rx="4" />
+        <text x="785" y="135">
+          Tipe 60
+        </text>
+        <rect x="760" y="150" width="20" height="20" fill="#ff9800" rx="4" />
+        <text x="785" y="165">
+          Tipe 50
+        </text>
         <rect
-          x="60"
-          y="110"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
+          x="760"
+          y="180"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="red"
+          strokeWidth="3"
+          rx="4"
         />
-      </a>
-      <a href="#type50-3">
-        <rect
-          x="60"
-          y="170"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-4">
-        <rect
-          x="60"
-          y="230"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-5">
-        <rect
-          x="60"
-          y="290"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-6">
-        <rect
-          x="60"
-          y="350"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-
-      <a href="#type50-7">
-        <rect
-          x="140"
-          y="50"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-8">
-        <rect
-          x="140"
-          y="110"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-9">
-        <rect
-          x="140"
-          y="170"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-10">
-        <rect
-          x="140"
-          y="230"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-11">
-        <rect
-          x="140"
-          y="290"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-      <a href="#type50-12">
-        <rect
-          x="140"
-          y="350"
-          width="70"
-          height="50"
-          fill="#FF9B50"
-          stroke="black"
-        />
-      </a>
-
-      {/* <!-- Type 60 Properties (Blue) - 10 units --> */}
-      <a href="#type60-1">
-        <rect
-          x="220"
-          y="50"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-2">
-        <rect
-          x="220"
-          y="110"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-3">
-        <rect
-          x="220"
-          y="170"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-4">
-        <rect
-          x="220"
-          y="230"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-5">
-        <rect
-          x="220"
-          y="290"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-
-      <a href="#type60-6">
-        <rect
-          x="300"
-          y="50"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-7">
-        <rect
-          x="300"
-          y="110"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-8">
-        <rect
-          x="300"
-          y="170"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-9">
-        <rect
-          x="300"
-          y="230"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-      <a href="#type60-10">
-        <rect
-          x="300"
-          y="290"
-          width="70"
-          height="50"
-          fill="#87CEEB"
-          stroke="black"
-        />
-      </a>
-
-      {/* <!-- Type 80 Properties (Yellow) - 3 units --> */}
-      <a href="#type80-1">
-        <rect
-          x="380"
-          y="50"
-          width="70"
-          height="50"
-          fill="#FFFF00"
-          stroke="black"
-        />
-      </a>
-      <a href="#type80-2">
-        <rect
-          x="380"
-          y="110"
-          width="70"
-          height="50"
-          fill="#FFFF00"
-          stroke="black"
-        />
-      </a>
-      <a href="#type80-3">
-        <rect
-          x="380"
-          y="170"
-          width="70"
-          height="50"
-          fill="#FFFF00"
-          stroke="black"
-        />
-      </a>
-      {/* Legend Box */}
-      <rect
-        x="500"
-        y="50"
-        width="200"
-        height="120"
-        fill="white"
-        stroke="black"
-      />
-      <rect x="520" y="70" width="20" height="20" fill="#FFFF00" />
-      <text x="550" y="85" fontSize="14">
-        Tipe 80
-      </text>
-      <rect x="520" y="100" width="20" height="20" fill="#87CEEB" />
-      <text x="550" y="115" fontSize="14">
-        Tipe 60
-      </text>
-      <rect x="520" y="130" width="20" height="20" fill="#FF9B50" />
-      <text x="550" y="145" fontSize="14">
-        Tipe 50
-      </text>
-
-      {/* Compass */}
-      <text x="700" y="200" fontSize="24" fill="black">
-        N
-      </text>
-      <text x="700" y="250" fontSize="24" fill="black">
-        E
-      </text>
-      <text x="650" y="250" fontSize="24" fill="black">
-        W
-      </text>
-      <text x="700" y="300" fontSize="24" fill="black">
-        S
-      </text>
-    </svg>
+        <text x="785" y="195">
+          Terjual
+        </text>
+      </svg>
+    </Box>
   );
 };
 

@@ -10,6 +10,11 @@ import {
   TextField,
   Box,
   CircularProgress,
+  Paper,
+  Alert,
+  Grid,
+  Icon,
+  IconButton,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { useRouter } from "next/navigation";
@@ -17,104 +22,157 @@ import { useLogout } from "@/hooks/auth/useLogin";
 import { api } from "@/helpers";
 import { toast } from "sonner";
 import PurchaseStatus from "@/components/PurchaseStatus";
+import Image from "next/image";
+
+// Import Ikon
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import SaveIcon from "@mui/icons-material/Save";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // <-- Centang Hijau
+import CancelIcon from "@mui/icons-material/Cancel"; // <-- Silang Merah
 
 const StyledAppBar = styled(AppBar)({
-  backgroundColor: "#1976d2",
+  backgroundColor: "#ffffff",
+  color: "#171717",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
 });
 
 const StyledButton = styled(Button)({
-  color: "white",
+  color: "#171717",
   marginLeft: "10px",
+  "&:hover": {
+    backgroundColor: "#f0f0f0",
+  },
 });
 
 export default function ProfilePage() {
   const router = useRouter();
   const { logout } = useLogout();
-  const [profile, setProfile] = useState({});
-  const [ktp, setKtp] = useState(null);
-  const [kk, setKk] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const userId = localStorage.getItem("user_id");
-        if (!token || !userId) {
-          throw new Error("No token or user ID found");
-        }
-        const response = await api.get(`/users/${userId}`, {
-          headers: { Authorization: `Bearer ${JSON.parse(token)}` },
-        });
-        setProfile(response.data);
-        if (response.data.ktp) setKtp({ name: "KTP (uploaded)" });
-        if (response.data.kk) setKk({ name: "KK (uploaded)" });
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        toast.error("Failed to load profile. Please log in again.");
-        router.push("/auth/signin");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // State untuk menampung file baru yang akan diupload
+  const [ktpFile, setKtpFile] = useState(null);
+  const [kkFile, setKkFile] = useState(null);
+  const [npwpFile, setNpwpFile] = useState(null);
 
-    fetchProfile();
-  }, [router]);
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const userIdString = localStorage.getItem("user_id");
+      if (!userIdString) throw new Error("Sesi tidak ditemukan.");
 
-  const handleLogout = () => {
-    logout();
-    router.push("/auth/signin");
-  };
+      const userId = JSON.parse(userIdString);
+      const response = await api.get(`/users/${userId}`);
 
-  const handleFileChange = (e, type) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (type === "ktp") {
-        setKtp(file);
-      } else if (type === "kk") {
-        setKk(file);
-      }
+      if (!response.data) throw new Error("Profil pengguna tidak ditemukan.");
+
+      setProfile(response.data);
+    } catch (error) {
+      toast.error(
+        error.message || "Gagal memuat profil. Silakan login kembali."
+      );
+      logout();
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleFileChange = (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png"];
+    const maxSize = 15 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Format file tidak didukung. Harap unggah JPG atau PNG.");
+      return;
+    }
+    if (file.size > maxSize) {
+      toast.error("Ukuran file terlalu besar. Maksimal 15 MB.");
+      return;
+    }
+
+    if (type === "ktp") setKtpFile(file);
+    if (type === "kk") setKkFile(file);
+    if (type === "npwp") setNpwpFile(file);
+
+    toast.info(`File ${file.name} siap untuk diunggah.`);
+  };
+
+  const handleUpdateProfileText = async () => {
+    try {
+      const userId = JSON.parse(localStorage.getItem("user_id"));
+      await api.put(`/users/${userId}`, {
+        full_name: profile.full_name,
+        email: profile.email,
+        phone_number: profile.phone_number,
+        username: profile.username,
+        role: profile.role,
+      });
+      toast.success("Data teks profil berhasil diperbarui");
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.data ||
+        error.response?.data ||
+        "Gagal memperbarui data teks.";
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleUploadImages = async () => {
     const formData = new FormData();
-    formData.append("full_name", profile.full_name);
-    formData.append("email", profile.email);
-    formData.append("phone_number", profile.phone_number);
-    if (ktp) formData.append("ktp", ktp);
-    if (kk) formData.append("kk", kk);
+    let hasFiles = false;
+
+    if (ktpFile instanceof File) {
+      formData.append("image_ktp", ktpFile);
+      hasFiles = true;
+    }
+    if (kkFile instanceof File) {
+      formData.append("image_kk", kkFile);
+      hasFiles = true;
+    }
+    if (npwpFile instanceof File) {
+      formData.append("image_npwp", npwpFile);
+      hasFiles = true;
+    }
+
+    if (!hasFiles) {
+      toast.info("Tidak ada gambar baru untuk diunggah.");
+      return;
+    }
 
     try {
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("user_id");
-      await api.put(`/users/${userId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${JSON.parse(token)}`,
-        },
-      });
-      toast.success("Profile updated successfully");
-      // Refresh profile data
-      const response = await api.get(`/users/${userId}`, {
-        headers: { Authorization: `Bearer ${JSON.parse(token)}` },
-      });
-      setProfile(response.data);
+      const userId = JSON.parse(localStorage.getItem("user_id"));
+      await api.put(`/users/upload-docs/${userId}`, formData);
+      toast.success("Gambar berhasil diunggah! Memuat ulang data...");
+      setKtpFile(null);
+      setKkFile(null);
+      setNpwpFile(null);
+      fetchProfile();
     } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile. Please try again.");
+      const errorMessage =
+        error.response?.data?.message || "Gagal mengunggah gambar.";
+      toast.error(errorMessage);
     }
   };
 
   if (loading) {
     return (
-      <Container
-        maxWidth="sm"
-        sx={{ mt: 4, display: "flex", justifyContent: "center" }}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
       >
         <CircularProgress />
-      </Container>
+      </Box>
     );
   }
 
@@ -122,97 +180,204 @@ export default function ProfilePage() {
     <div>
       <StyledAppBar position="static">
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Teras Jawi Home
-          </Typography>
-          <StyledButton onClick={() => router.push("/")}>Home</StyledButton>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexGrow: 1,
+              cursor: "pointer",
+            }}
+            onClick={() => router.push("/")}
+          >
+            <Image
+              src="/images/web/icon-192.png"
+              alt="Teras Jawi Logo"
+              width={40}
+              height={40}
+            />
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ ml: 1, fontWeight: "bold" }}
+            >
+              Teras Jawi
+            </Typography>
+          </Box>
+          <StyledButton onClick={() => router.push("/")}>Beranda</StyledButton>
           <StyledButton onClick={() => router.push("/listings")}>
-            Listings
+            Properti
           </StyledButton>
-          <StyledButton onClick={() => router.push("/about")}>
-            About
+          <StyledButton onClick={logout} variant="contained" color="error">
+            Keluar
           </StyledButton>
-          <StyledButton onClick={() => router.push("/contact")}>
-            Contact
-          </StyledButton>
-          <StyledButton onClick={handleLogout}>Logout</StyledButton>
         </Toolbar>
       </StyledAppBar>
 
-      <Container maxWidth="sm" sx={{ mt: 4 }}>
-        <Typography variant="h2" align="center" gutterBottom>
-          Profile
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Typography
+          variant="h4"
+          align="center"
+          gutterBottom
+          sx={{ fontWeight: "bold" }}
+        >
+          Profil Saya
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-          <TextField
-            fullWidth
-            margin="normal"
-            name="full_name"
-            label="Full Name"
-            value={profile.full_name || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, full_name: e.target.value })
-            }
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            name="email"
-            label="Email"
-            value={profile.email || ""}
-            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            name="phone_number"
-            label="Phone Number"
-            value={profile.phone_number || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, phone_number: e.target.value })
-            }
-          />
-          <Box sx={{ mt: 2 }}>
-            <input
-              accept="image/*"
-              style={{ display: "none" }}
-              id="ktp-file"
-              type="file"
-              onChange={(e) => handleFileChange(e, "ktp")}
-            />
-            <label htmlFor="ktp-file">
-              <Button variant="contained" component="span">
-                {ktp ? "Change KTP" : "Upload KTP"}
-              </Button>
-            </label>
-            {ktp && <Typography sx={{ ml: 2 }}>{ktp.name}</Typography>}
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            <input
-              accept="image/*"
-              style={{ display: "none" }}
-              id="kk-file"
-              type="file"
-              onChange={(e) => handleFileChange(e, "kk")}
-            />
-            <label htmlFor="kk-file">
-              <Button variant="contained" component="span">
-                {kk ? "Change KK" : "Upload KK"}
-              </Button>
-            </label>
-            {kk && <Typography sx={{ ml: 2 }}>{kk.name}</Typography>}
-          </Box>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-          >
-            Update Profile
-          </Button>
-        </Box>
 
-        <PurchaseStatus userId={localStorage.getItem("user_id")} />
+        <Paper elevation={3} sx={{ p: 4, mt: 3 }}>
+          {profile ? (
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="h6">Informasi Personal</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Nama Lengkap"
+                  name="full_name"
+                  value={profile.full_name || ""}
+                  onChange={(e) =>
+                    setProfile({ ...profile, full_name: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  value={profile.email || ""}
+                  onChange={(e) =>
+                    setProfile({ ...profile, email: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Nomor Telepon"
+                  name="phone_number"
+                  value={profile.phone_number || ""}
+                  onChange={(e) =>
+                    setProfile({ ...profile, phone_number: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  onClick={handleUpdateProfileText}
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  startIcon={<SaveIcon />}
+                >
+                  Simpan Perubahan Data
+                </Button>
+              </Grid>
+            </Grid>
+          ) : (
+            <Alert severity="error">
+              Tidak dapat memuat data profil. Silakan coba lagi nanti.
+            </Alert>
+          )}
+        </Paper>
+
+        <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12}>
+              <Typography variant="h6">Dokumen Pendukung</Typography>
+            </Grid>
+
+            {/* KTP Section */}
+            <Grid item xs={10}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                startIcon={<CloudUploadIcon />}
+              >
+                {ktpFile instanceof File ? ktpFile.name : "Upload KTP"}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg, image/png"
+                  onChange={(e) => handleFileChange(e, "ktp")}
+                />
+              </Button>
+            </Grid>
+            <Grid item xs={2} sx={{ textAlign: "center" }}>
+              {profile?.image_ktp || ktpFile ? (
+                <CheckCircleIcon color="success" />
+              ) : (
+                <CancelIcon color="error" />
+              )}
+            </Grid>
+
+            {/* KK Section */}
+            <Grid item xs={10}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                startIcon={<CloudUploadIcon />}
+              >
+                {kkFile instanceof File ? kkFile.name : "Upload KK"}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg, image/png"
+                  onChange={(e) => handleFileChange(e, "kk")}
+                />
+              </Button>
+            </Grid>
+            <Grid item xs={2} sx={{ textAlign: "center" }}>
+              {profile?.image_kk || kkFile ? (
+                <CheckCircleIcon color="success" />
+              ) : (
+                <CancelIcon color="error" />
+              )}
+            </Grid>
+
+            {/* NPWP Section */}
+            <Grid item xs={10}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                startIcon={<CloudUploadIcon />}
+              >
+                {npwpFile instanceof File ? npwpFile.name : "Upload NPWP"}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg, image/png"
+                  onChange={(e) => handleFileChange(e, "npwp")}
+                />
+              </Button>
+            </Grid>
+            <Grid item xs={2} sx={{ textAlign: "center" }}>
+              {profile?.image_npwp || npwpFile ? (
+                <CheckCircleIcon color="success" />
+              ) : (
+                <CancelIcon color="error" />
+              )}
+            </Grid>
+
+            <Grid item xs={12} sx={{ mt: 2 }}>
+              <Button
+                onClick={handleUploadImages}
+                fullWidth
+                variant="contained"
+                color="secondary"
+                size="large"
+                startIcon={<CloudUploadIcon />}
+              >
+                Unggah Dokumen yang Dipilih
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        <PurchaseStatus userId={profile?.user_id} />
       </Container>
     </div>
   );

@@ -74,53 +74,71 @@ export const useGetPropertyById = (props) => {
 export const useCreateProperty = () => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
+  return useMutation({
     mutationFn: async (newProperty) => {
-      console.log("NEW property--", newProperty);
-      const response = await api.post("/property", newProperty);
+      const formData = new FormData();
+      formData.append("property_name", newProperty.property_name);
+      formData.append("type_id", newProperty.type_id);
+      formData.append("price", newProperty.price);
+      formData.append("sq_meter", newProperty.sq_meter);
+      formData.append("description", newProperty.description);
+      if (newProperty.image) {
+        formData.append("image", newProperty.image); // 'image' adalah nama field untuk file
+      }
+
+      const response = await api.post("/property", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success("Data Property berhasil ditambahkan");
-      queryClient.invalidateQueries("property-all");
-      console.log("Post Data Property Sukses ----", data);
+      toast.success("Data Properti berhasil ditambahkan");
+      queryClient.invalidateQueries({ queryKey: ["property-all"] });
     },
     onError: (error) => {
-      toast.error("Terjadi kesalahan saat menambahkan data Property");
-      console.log("Error Post Data");
-      console.log(error.response.data);
+      toast.error(
+        error.response?.data?.message ||
+          "Terjadi kesalahan saat menambahkan data Properti"
+      );
+      console.log("Error Post Data:", error.response?.data);
     },
   });
-
-  return mutation;
 };
 
 export const useUpdateProperty = (props) => {
   const { property_id } = props;
   const queryClient = useQueryClient();
-  const mutation = useMutation({
+
+  return useMutation({
     mutationFn: async (updateProperty) => {
-      console.log("Update PS--", updateProperty);
-      const response = await api.put(
-        `/property/${property_id}`,
-        updateProperty
-      );
+      const formData = new FormData();
+      formData.append("property_name", updateProperty.property_name);
+      formData.append("type_id", updateProperty.type_id);
+      formData.append("price", updateProperty.price);
+      formData.append("sq_meter", updateProperty.sq_meter);
+      formData.append("description", updateProperty.description);
+      // Hanya kirim gambar jika ada file baru yang diupload
+      if (updateProperty.image && updateProperty.image instanceof File) {
+        formData.append("image", updateProperty.image);
+      }
+
+      const response = await api.put(`/property/${property_id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success("Success Update Property");
-      console.log("Success Update Property");
-      console.log(data);
-      queryClient.invalidateQueries("property-all");
-      return data;
+      toast.success("Sukses memperbarui data Property");
+      queryClient.invalidateQueries({ queryKey: ["property-all"] });
+      queryClient.invalidateQueries({
+        queryKey: [`Property-By-Id-${property_id}`],
+      });
     },
     onError: (error) => {
-      toast.warning("Error Update Property");
-      console.log("Error Update Property");
-      console.log(error);
+      toast.warning(error.response?.data?.message || "Error Update Property");
+      console.log("Error Update Property:", error.response?.data);
     },
   });
-  return mutation;
 };
 
 export const useDeleteProperty = () => {
@@ -142,4 +160,50 @@ export const useDeleteProperty = () => {
     },
   });
   return mutation;
+};
+
+export const useAddPropertyImages = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ property_id, images }) => {
+      const formData = new FormData();
+      for (let i = 0; i < images.length; i++) {
+        formData.append("images", images[i]);
+      }
+      const response = await api.post(
+        `/property/images/${property_id}`,
+        formData
+      );
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      toast.success("Gambar baru berhasil ditambahkan.");
+      queryClient.invalidateQueries(["Property-By-Id-", variables.property_id]);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Gagal menambah gambar.");
+    },
+  });
+};
+
+// HOOK BARU untuk menghapus gambar
+export const useDeletePropertyImage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (image_id) => {
+      const response = await api.delete(`/property/images/${image_id}`);
+      return response.data;
+    },
+    onSuccess: (data, image_id) => {
+      toast.success("Gambar berhasil dihapus.");
+      // Invalidate semua query properti agar daftar gambar diperbarui
+      queryClient.invalidateQueries(["property-all"]);
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0].startsWith("Property-By-Id-"),
+      });
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Gagal menghapus gambar.");
+    },
+  });
 };

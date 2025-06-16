@@ -1,6 +1,7 @@
 import { api } from "@/helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation"; // <--- TAMBAHKAN BARIS INI
 
 export const useGetPendingPurchases = () => {
   return useQuery({
@@ -46,7 +47,9 @@ export const useConfirmPurchase = () => {
     },
     onSuccess: () => {
       toast.success("Purchase confirmed successfully");
-      queryClient.invalidateQueries("purchases-pending");
+      queryClient.invalidateQueries({ queryKey: ["purchases-pending"] });
+      // Invalidate query properties agar peta SVG di halaman listings ikut terupdate
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
     },
     onError: (error) => {
       toast.error("Error confirming purchase");
@@ -65,10 +68,37 @@ export const useCancelPurchase = () => {
     },
     onSuccess: () => {
       toast.success("Purchase cancelled successfully");
-      queryClient.invalidateQueries("purchases-pending");
+      queryClient.invalidateQueries({ queryKey: ["purchases-pending"] });
     },
     onError: (error) => {
       toast.error("Error cancelling purchase");
+      console.error(error);
+    },
+  });
+};
+
+export const useCreatePurchase = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter(); // Sekarang useRouter sudah terdefinisi
+
+  return useMutation({
+    mutationFn: async (newPurchase) => {
+      const response = await api.post("/purchases", newPurchase);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success(
+        "Permintaan pembelian berhasil dikirim! Anda akan dialihkan ke halaman profil."
+      );
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      setTimeout(() => {
+        router.push("/profile");
+      }, 2000);
+    },
+    onError: (error) => {
+      toast.error(
+        error.response?.data?.message || "Gagal mengajukan pembelian."
+      );
       console.error(error);
     },
   });
