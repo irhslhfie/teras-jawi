@@ -10,6 +10,9 @@ import NewspaperIcon from "@mui/icons-material/Newspaper";
 import CountertopsIcon from "@mui/icons-material/Countertops";
 import DomainAddIcon from "@mui/icons-material/DomainAdd";
 import HistoryIcon from "@mui/icons-material/History";
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
 
 export const menuItems = [
   {
@@ -57,14 +60,26 @@ export const menuItems = [
 
   {
     text: "Pembelian",
-    icon: <PaymentIcon />,
-    roles: ["admin", "owner"],
+    icon: <ShoppingCartIcon />,
+    roles: ["admin", "owner", "marketing"],
     subItems: [
-      { text: "Verifikasi Pembelian", path: "/purchases", roles: ["admin"] },
+      {
+        text: "Verifikasi Pembelian",
+        path: "/purchases",
+        icon: <FactCheckIcon />,
+        roles: ["admin", "owner", "marketing"],
+      },
+      {
+        text: "Tracking KPR", // <-- MENU BARU
+        path: "/kpr",
+        icon: <AnalyticsIcon />,
+        roles: ["marketing", "admin", "owner"],
+      },
       {
         text: "Histori Laporan Pembelian",
         path: "/purchases/history",
-        roles: ["admin", "owner"],
+        icon: <HistoryIcon />,
+        roles: ["admin", "owner", "marketing"],
       },
     ],
   },
