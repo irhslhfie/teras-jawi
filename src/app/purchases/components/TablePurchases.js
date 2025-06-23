@@ -16,6 +16,7 @@ import {
   Grid,
   Divider,
   IconButton,
+  Chip,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -26,70 +27,46 @@ import {
 } from "@/hooks/purchases/usePurchases";
 import Image from "next/image";
 
-const headCells = [
-  { id: "full_name", label: "Nama Pembeli" },
-  { id: "property_name", label: "Properti" },
-  { id: "payment_method", label: "Metode Bayar" },
-  { id: "total_price", label: "Harga" },
-  { id: "status", label: "Status" },
-  { id: "action", label: "Aksi" },
-];
-
+// Komponen Modal Detail (tidak berubah)
 const DetailModal = React.forwardRef(
   ({ purchase, apiBaseUrl, onClose }, ref) => {
     if (!purchase) return null;
-
     const renderImage = (imagePath, altText) => {
-      // 1. Pengecekan yang lebih ketat: pastikan imagePath adalah string yang tidak kosong.
       if (
         !imagePath ||
         typeof imagePath !== "string" ||
         imagePath.trim() === ""
-      ) {
+      )
         return <Typography color="text.secondary">(Belum diunggah)</Typography>;
-      }
-
-      // 2. Pengecekan untuk apiBaseUrl
-      if (!apiBaseUrl) {
-        console.error(
-          "Error: NEXT_PUBLIC_API_URI is not defined. Cannot construct image URL."
-        );
+      if (!apiBaseUrl)
         return (
           <Typography color="error">(Konfigurasi URL API salah)</Typography>
         );
-      }
-
-      const sanitizedPath = imagePath.replace(/\\/g, "/");
-      const finalUrl = `${apiBaseUrl}${sanitizedPath}`;
-
-      // 3. Log untuk debugging URL yang akan dirender
-      console.log(`Rendering image for ${altText}: ${finalUrl}`);
-
+      let relativePath = imagePath.replace(/\\/g, "/");
+      const uploadIndex = relativePath.indexOf("uploads/");
+      if (uploadIndex > -1)
+        relativePath = `/${relativePath.substring(uploadIndex)}`;
+      else if (!relativePath.startsWith("/")) relativePath = `/${relativePath}`;
+      const finalUrl = `${apiBaseUrl}${relativePath}`;
       try {
-        // 4. Validasi URL sebelum merender untuk mencegah crash
         new URL(finalUrl);
       } catch (error) {
-        console.error(`Invalid URL constructed for ${altText}:`, finalUrl);
         return <Typography color="error">(URL Gambar tidak valid)</Typography>;
       }
-
       return (
         <Image
           src={finalUrl}
           alt={altText}
           width={200}
           height={120}
-          style={{ objectFit: "contain", border: "1px solid #ddd" }}
+          style={{ objectFit: "contain" }}
           unoptimized
           onError={(e) => {
             e.currentTarget.style.display = "none";
-            const errorText = e.currentTarget.nextSibling;
-            if (errorText) errorText.style.display = "block";
           }}
         />
       );
     };
-
     return (
       <Box
         ref={ref}
@@ -166,7 +143,6 @@ const DetailModal = React.forwardRef(
     );
   }
 );
-
 DetailModal.displayName = "DetailModal";
 
 export default function TablePurchases({
@@ -175,6 +151,7 @@ export default function TablePurchases({
   isLoading,
   isError,
   error,
+  isHistory = false,
 }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -188,13 +165,10 @@ export default function TablePurchases({
     setSelectedPurchase(purchase);
     setModalOpen(true);
   };
-  const handleCloseModal = () => setModalOpen(false);
-
   const handleConfirm = (purchaseId, event) => {
     event.stopPropagation();
     confirmPurchase.mutate(purchaseId);
   };
-
   const handleCancel = (purchaseId, event) => {
     event.stopPropagation();
     cancelPurchase.mutate(purchaseId);
@@ -207,10 +181,31 @@ export default function TablePurchases({
       page * rowsPerPage + rowsPerPage
     );
   }, [page, rowsPerPage, data]);
-
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URI
     ? process.env.NEXT_PUBLIC_API_URI.replace("/api/v1", "")
     : "";
+
+  const headCells = useMemo(() => {
+    const base = [
+      { id: "full_name", label: "Nama Pembeli" },
+      { id: "property_name", label: "Properti" },
+      { id: "payment_method", label: "Metode Bayar" },
+      { id: "total_price", label: "Harga" },
+      { id: "status", label: "Status" },
+    ];
+    if (!isHistory) base.push({ id: "action", label: "Aksi" });
+    return base;
+  }, [isHistory]);
+
+  const getStatusChip = (status) => {
+    const color =
+      status === "Confirmed"
+        ? "success"
+        : status === "Cancelled"
+          ? "error"
+          : "warning";
+    return <Chip label={status} color={color} size="small" />;
+  };
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -242,9 +237,9 @@ export default function TablePurchases({
               <Table>
                 <TableHead>
                   <TableRow>
-                    {headCells.map((headCell) => (
-                      <TableCell key={headCell.id} sx={{ fontWeight: "bold" }}>
-                        {headCell.label}
+                    {headCells.map((cell) => (
+                      <TableCell key={cell.id} sx={{ fontWeight: "bold" }}>
+                        {cell.label}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -266,27 +261,25 @@ export default function TablePurchases({
                           currency: "IDR",
                         }).format(row.total_price)}
                       </TableCell>
-                      <TableCell>
-                        <Typography color={"warning.main"} fontWeight={"bold"}>
-                          {row.status}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          title="Konfirmasi"
-                          color="success"
-                          onClick={(e) => handleConfirm(row.purchases_id, e)}
-                        >
-                          <CheckCircleIcon />
-                        </IconButton>
-                        <IconButton
-                          title="Batalkan"
-                          color="error"
-                          onClick={(e) => handleCancel(row.purchases_id, e)}
-                        >
-                          <CancelIcon />
-                        </IconButton>
-                      </TableCell>
+                      <TableCell>{getStatusChip(row.status)}</TableCell>
+                      {!isHistory && (
+                        <TableCell>
+                          <IconButton
+                            title="Konfirmasi"
+                            color="success"
+                            onClick={(e) => handleConfirm(row.purchases_id, e)}
+                          >
+                            <CheckCircleIcon />
+                          </IconButton>
+                          <IconButton
+                            title="Batalkan"
+                            color="error"
+                            onClick={(e) => handleCancel(row.purchases_id, e)}
+                          >
+                            <CancelIcon />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -307,12 +300,11 @@ export default function TablePurchases({
           </>
         )}
       </Paper>
-
-      <Modal open={modalOpen} onClose={handleCloseModal}>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <DetailModal
           purchase={selectedPurchase}
           apiBaseUrl={apiBaseUrl}
-          onClose={handleCloseModal}
+          onClose={() => setModalOpen(false)}
         />
       </Modal>
     </Box>
