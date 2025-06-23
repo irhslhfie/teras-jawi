@@ -8,15 +8,14 @@ import Button from "@mui/material/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import TableProperty from "./components/TableProperty";
-import MultipleSelectChip from "@/components/SelectInput";
+import SearchAndFilter from "@/components/SearchAndFilter";
 import { useGetTypesAll } from "@/hooks/types/useTypes";
 import { useGetPropertyAll } from "@/hooks/property/useProperty";
 
 export default function Property() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeId, setTypeId] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [filters, setFilters] = useState({ type_id: "" });
 
   const { data: dataTypes, isLoading: loadingTypes } = useGetTypesAll();
   const {
@@ -26,30 +25,28 @@ export default function Property() {
     error,
     refetch: refetchProperty,
   } = useGetPropertyAll({
-    type_name: searchQuery,
-    type_id: typeId,
+    property_name: searchQuery,
+    type_id: filters.type_id,
   });
 
-  useEffect(() => {
-    const roleUser = localStorage.getItem("role");
-
-    if (roleUser) {
-      setUserRole(JSON.parse(roleUser));
+  // Filter options for SearchAndFilter component
+  const filterOptions = useMemo(() => ({
+    type_id: {
+      label: "Tipe Properti",
+      items: dataTypes?.map(type => ({
+        value: type.type_id,
+        label: type.type_name
+      })) || []
     }
-  }, []);
+  }), [dataTypes]);
 
-  //   useEffect(() => {
-  //     refetchProperty();
-  //   }, [searchQueryPS, searchQuery]);
-
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
   };
 
-  const typeIds = useMemo(() => {
-    if (!dataTypes) return [];
-    return dataTypes.map((types) => types.type_name);
-  }, [dataTypes]);
+  const handleClearFilters = () => {
+    setFilters({ type_id: "" });
+  };
 
   return (
     <AuthWrapper allowedRoles={["admin", "owner"]}>
@@ -59,38 +56,39 @@ export default function Property() {
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: "flex-start",
               mb: 2,
-              px: 2,
+              gap: 2,
             }}
           >
-            <div className="flex space-x-2">
-              {!loadingTypes && dataTypes && (
-                <MultipleSelectChip
-                  title={"Pilih Tipe"}
-                  names={typeIds}
-                  personName={searchQuery}
-                  setPersonName={setSearchQuery}
-                />
-              )}
-            </div>
+            <Box sx={{ flex: 1 }}>
+              <SearchAndFilter
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                filterOptions={filterOptions}
+                onClearFilters={handleClearFilters}
+                placeholder="Cari nama properti..."
+              />
+            </Box>
 
             <Button
               variant="contained"
               endIcon={<AddIcon />}
               onClick={() => router.push("/property/tambah-property")}
               sx={{
-                padding: "8px 16px",
-                fontSize: "0.875rem",
-                height: "40px",
+                minWidth: "160px",
+                height: "56px",
+                mt: 3, // Align with search bar
               }}
             >
-              Tambah
+              Tambah Properti
             </Button>
           </Box>
 
           <TableProperty
-            data={dataProperty}
+            data={dataProperty || []}
             tableTitle={"Tabel Data Property"}
             isLoading={isLoading}
             isError={error}

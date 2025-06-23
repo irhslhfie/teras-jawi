@@ -2,6 +2,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ProviderQuery } from "@/hooks/provider";
 import { Toaster } from "sonner";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -15,20 +16,34 @@ const geistMono = localFont({
 });
 
 export const metadata = {
-  title: "Dashboard Tama Game",
-  description: "Created by Khaerul Anam",
+  title: "Teras Jawi - Property Management System",
+  description: "Modern property management system for Teras Jawi housing development",
+  keywords: "property, real estate, housing, Teras Jawi, management",
+  authors: [{ name: "Khaerul Anam" }],
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="id">
+      <head>
+        <link rel="icon" href="/images/web/favicon.ico" />
+        <link rel="apple-touch-icon" href="/images/web/apple-touch-icon.png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ProviderQuery>
-          <Toaster position="top-center" richColors />
-          {children}
-        </ProviderQuery>
+        <ErrorBoundary>
+          <ProviderQuery>
+            <Toaster 
+              position="top-center" 
+              richColors 
+              closeButton
+              duration={4000}
+            />
+            {children}
+          </ProviderQuery>
+        </ErrorBoundary>
       </body>
     </html>
   );

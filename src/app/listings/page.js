@@ -13,10 +13,6 @@ import {
   ToggleButton,
   Divider,
   Grid,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
   FormControl,
   InputLabel,
   Select,
@@ -32,13 +28,17 @@ import { useGetTypesAll } from "@/hooks/types/useTypes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/helpers";
 import { toast } from "sonner";
+import PropertyCard from "@/components/PropertyCard";
+import SearchAndFilter from "@/components/SearchAndFilter";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { useAuth } from "@/hooks/useLocalStorage";
 
-// Komponen AppBar dan Button tetap sama
 const StyledAppBar = styled(AppBar)({
   backgroundColor: "#ffffff",
   color: "#171717",
   boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
 });
+
 const StyledButton = styled(Button)({
   color: "#171717",
   marginLeft: "10px",
@@ -50,16 +50,16 @@ const StyledButton = styled(Button)({
 export default function ListingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { isAuthenticated, fullname, userId, role: userRole } = useAuth();
+  const { logout } = useLogout();
 
   const [filters, setFilters] = useState({ type_id: "" });
+  const [searchQuery, setSearchQuery] = useState("");
   const [propertyToPurchase, setPropertyToPurchase] = useState(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
-  const { isLoggedIn, fullname, userId, isMounted, userRole } = useAuthStatus();
-  const { logout } = useLogout();
-
-  // Mengambil data untuk filter dan properti
+  // Fetch data
   const { data: dataTypes } = useGetTypesAll();
   const {
     data: properties = [],
@@ -67,9 +67,10 @@ export default function ListingsPage() {
     isError,
   } = useGetPropertyAll({
     type_id: filters.type_id,
+    property_name: searchQuery,
   });
 
-  // Mengambil profil pengguna jika sudah login
+  // Get user profile if logged in
   const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["userProfile", userId],
     queryFn: async () => {
@@ -80,7 +81,7 @@ export default function ListingsPage() {
     enabled: !!userId,
   });
 
-  // Mutasi untuk proses pembelian
+  // Purchase mutation
   const purchaseMutation = useMutation({
     mutationFn: (purchaseData) => api.post("/purchases", purchaseData),
     onSuccess: (data) => {
@@ -99,13 +100,27 @@ export default function ListingsPage() {
     },
   });
 
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  // Filter options for SearchAndFilter component
+  const filterOptions = useMemo(() => ({
+    type_id: {
+      label: "Tipe Properti",
+      items: dataTypes?.map(type => ({
+        value: type.type_id,
+        label: type.type_name
+      })) || []
+    }
+  }), [dataTypes]);
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ type_id: "" });
   };
 
   const handleOpenPurchaseFlow = (property) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       toast.error("Silakan masuk terlebih dahulu untuk melakukan pembelian.");
       return router.push("/auth/signin");
     }
@@ -132,10 +147,9 @@ export default function ListingsPage() {
   };
 
   const renderAuthButtons = () => {
-    if (!isMounted) return null;
-    const isAdminOrOwner =
-      userRole === "admin" || userRole === "owner" || userRole === "marketing";
-    if (isLoggedIn) {
+    const isAdminOrOwner = ["admin", "owner", "marketing"].includes(userRole);
+    
+    if (isAuthenticated) {
       return (
         <>
           <Button
@@ -169,8 +183,11 @@ export default function ListingsPage() {
     }
   };
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_URI?.replace("/api/v1", "") || "";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URI?.replace("/api/v1", "") || "";
+
+  if (isLoading) {
+    return <LoadingSpinner message="Memuat properti..." />;
+  }
 
   return (
     <div>
@@ -222,104 +239,55 @@ export default function ListingsPage() {
           Temukan properti impian yang sesuai dengan kebutuhan Anda.
         </Typography>
 
-        {/* Filter Section */}
-        <Paper elevation={2} sx={{ p: 2, mb: 4, display: "flex", gap: 2 }}>
-          <FormControl fullWidth>
-            <InputLabel id="type-filter-label">
-              Filter Berdasarkan Tipe
-            </InputLabel>
-            <Select
-              labelId="type-filter-label"
-              name="type_id"
-              value={filters.type_id}
-              label="Filter Berdasarkan Tipe"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">
-                <em>Tampilkan Semua</em>
-              </MenuItem>
-              {dataTypes?.map((type) => (
-                <MenuItem key={type.type_id} value={type.type_id}>
-                  {type.type_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Paper>
+        {/* Search and Filter */}
+        <SearchAndFilter
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          filterOptions={filterOptions}
+          onClearFilters={handleClearFilters}
+          placeholder="Cari nama properti..."
+        />
 
-        {/* Property Grid Section */}
-        {isLoading && (
-          <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-            <CircularProgress />
-          </Box>
-        )}
+        {/* Property Grid */}
         {isError && (
           <Typography color="error" align="center">
             Gagal memuat data properti.
           </Typography>
         )}
-        {!isLoading && !isError && (
+        
+        {!isError && (
           <Grid container spacing={4}>
             {properties.length > 0 ? (
               properties.map((property) => (
                 <Grid item key={property.property_id} xs={12} sm={6} md={4}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={
-                        property.images?.[0]
-                          ? `${apiBaseUrl}${property.images[0]}`
-                          : "/images/teras_jawi.jpg"
-                      }
-                      alt={property.property_name}
-                    />
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography gutterBottom variant="h5" component="h2">
-                        {property.property_name}
-                      </Typography>
-                      <Typography variant="subtitle1" color="text.secondary">
-                        {property.type_name}
-                      </Typography>
-                      <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-                        {new Intl.NumberFormat("id-ID", {
-                          style: "currency",
-                          currency: "IDR",
-                        }).format(property.price)}
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={() => handleOpenPurchaseFlow(property)}
-                        disabled={property.status !== "Tersedia"}
-                      >
-                        {property.status === "Tersedia"
-                          ? "Ajukan Pembelian"
-                          : "Terjual"}
-                      </Button>
-                    </CardActions>
-                  </Card>
+                  <PropertyCard
+                    property={property}
+                    onPurchase={handleOpenPurchaseFlow}
+                    apiBaseUrl={apiBaseUrl}
+                  />
                 </Grid>
               ))
             ) : (
-              <Container sx={{ textAlign: "center", my: 5 }}>
-                <Typography variant="h6">
-                  Tidak ada properti yang cocok dengan filter Anda.
-                </Typography>
-              </Container>
+              <Grid item xs={12}>
+                <Paper sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography variant="h6">
+                    Tidak ada properti yang cocok dengan pencarian Anda.
+                  </Typography>
+                  <Button 
+                    onClick={handleClearFilters}
+                    sx={{ mt: 2 }}
+                  >
+                    Reset Filter
+                  </Button>
+                </Paper>
+              </Grid>
             )}
           </Grid>
         )}
 
-        {/* Modal untuk Pilihan Pembayaran */}
+        {/* Payment Modal */}
         <Modal
           open={paymentModalOpen}
           onClose={() => setPaymentModalOpen(false)}
@@ -373,32 +341,4 @@ export default function ListingsPage() {
       </Container>
     </div>
   );
-}
-
-// Hook untuk status otentikasi
-function useAuthStatus() {
-  const [authData, setAuthData] = useState({
-    isLoggedIn: false,
-    fullname: "",
-    userId: null,
-    isMounted: false,
-    userRole: null,
-  });
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setAuthData({
-        isLoggedIn: true,
-        fullname: JSON.parse(localStorage.getItem("fullname") || '""'),
-        userId: JSON.parse(localStorage.getItem("user_id") || "null"),
-        userRole: JSON.parse(localStorage.getItem("role") || '""'),
-        isMounted: true,
-      });
-    } else {
-      setAuthData((prev) => ({ ...prev, isMounted: true }));
-    }
-  }, []);
-
-  return authData;
 }
